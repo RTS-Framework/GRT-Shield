@@ -1,10 +1,12 @@
 package shield
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"io"
 	"io/fs"
+	"text/template"
 )
 
 // The role of the junk code is to make the instruction sequence
@@ -12,10 +14,10 @@ import (
 var (
 	//go:embed junk/*_x86.asm
 	defaultJunkCodeFSx86 embed.FS
-	
+
 	//go:embed junk/*_x64.asm
 	defaultJunkCodeFSx64 embed.FS
-	
+
 	defaultJunkCodeX86 = readJunkCodeTemplates(defaultJunkCodeFSx86)
 	defaultJunkCodeX64 = readJunkCodeTemplates(defaultJunkCodeFSx64)
 )
@@ -46,16 +48,16 @@ func readJunkCodeTemplates(efs embed.FS) []string {
 type junkCodeCtx struct {
 	// for replace registers
 	Reg map[string]string
-	
+
 	// for insert random instruction pair
 	Switch map[string]bool
-	
+
 	// for random immediate data
 	BYTE  map[string]int8
 	WORD  map[string]int16
 	DWORD map[string]int32
 	QWORD map[string]int64
-	
+
 	// for random immediate data with [0, 32) and [0, 64)
 	Less32 map[string]int
 	Less64 map[string]int
@@ -134,4 +136,51 @@ func (gen *Generator) getJunkCodeX64() []string {
 		return gen.opts.JunkCodeX64
 	}
 	return defaultJunkCodeX64
+}
+
+// #nosec G115
+func (gen *Generator) buildJunkCode(src string) (string, error) {
+	// process assembly source
+	tpl, err := template.New("junk_code").Funcs(template.FuncMap{
+		"db":  toDB,
+		"hex": toHex,
+	}).Parse(src)
+	if err != nil {
+		return "", fmt.Errorf("invalid junk code template: %s", err)
+	}
+	// initialize random data
+	switches := make(map[string]bool)
+	BYTE := make(map[string]int8)
+	WORD := make(map[string]int16)
+	DWORD := make(map[string]int32)
+	QWORD := make(map[string]int64)
+	Less32 := make(map[string]int)
+	Less64 := make(map[string]int)
+	for i := 'A'; i <= 'Z'; i++ {
+		b := gen.rand.Intn(2) == 0
+		switches[string(i)] = b
+		switches[string(i+0x20)] = b
+		BYTE[string(i)] = int8(gen.rand.Int31() % 128)
+		WORD[string(i)] = int16(gen.rand.Int31() % 32768)
+		DWORD[string(i)] = gen.rand.Int31()
+		QWORD[string(i)] = gen.rand.Int63()
+		Less32[string(i)] = gen.rand.Intn(32)
+		Less64[string(i)] = gen.rand.Intn(64)
+	}
+	ctx := junkCodeCtx{
+		Reg:    gen.buildRandomRegisterMap(),
+		Switch: switches,
+		BYTE:   BYTE,
+		WORD:   WORD,
+		DWORD:  DWORD,
+		QWORD:  QWORD,
+		Less32: Less32,
+		Less64: Less64,
+	}
+	buf := bytes.NewBuffer(make([]byte, 0, 512))
+	err = tpl.Execute(buf, &ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to build junk code assembly source: %s", err)
+	}
+	return buf.String(), nil
 }

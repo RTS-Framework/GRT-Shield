@@ -51,8 +51,8 @@ type Options struct {
 
 // Context contains the output and context data in Generate.
 type Context struct {
-	Output []byte `toml:"output" json:"output"`
-	Seed   int64  `toml:"seed"   json:"seed"`
+	Output []byte `json:"output"`
+	Seed   int64  `json:"seed"`
 }
 
 // NewGenerator is used to create a shield generator.

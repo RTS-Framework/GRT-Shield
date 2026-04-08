@@ -4,6 +4,7 @@ import (
 	cr "crypto/rand"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -36,10 +37,10 @@ type Options struct {
 	RandSeed int64 `toml:"rand_seed" json:"rand_seed"`
 
 	// specify the x86 shield template.
-	TemplateX86 string `toml:"template_x86" json:"template_x86"`
+	ShieldX86 string `toml:"shield_x86" json:"shield_x86"`
 
 	// specify the x64 shield template.
-	TemplateX64 string `toml:"template_x64" json:"template_x64"`
+	ShieldX64 string `toml:"shield_x64" json:"shield_x64"`
 
 	// specify the x86 junk code templates.
 	JunkCodeX86 []string `toml:"junk_code_x86" json:"junk_code_x86"`
@@ -68,6 +69,51 @@ func NewGenerator() *Generator {
 		rand: rand.New(rand.NewSource(seed)), // #nosec
 	}
 	return &generator
+}
+
+// Generate is used to generate a new random shield.
+func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New(fmt.Sprint(r))
+		}
+	}()
+	switch arch {
+	case 32, 64:
+	default:
+		return nil, fmt.Errorf("unsupported architecture: %d", arch)
+	}
+	if opts == nil {
+		opts = new(Options)
+	}
+	gen.arch = arch
+	gen.opts = opts
+	// initialize keystone engine
+	err = gen.initAssembler()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize assembler: %s", err)
+	}
+	// set random seed
+	seed := opts.RandSeed
+	if seed == 0 {
+		seed = gen.rand.Int63()
+	}
+	gen.rand.Seed(seed)
+	// build shield source from template
+	shield, err := gen.buildShield("")
+	if err != nil {
+		return nil, fmt.Errorf("failed to build shield: %s", err)
+	}
+	output, err := gen.assemble(shield)
+	if err != nil {
+		return nil, fmt.Errorf("failed to assemble shield source: %s", err)
+	}
+	// build context for test and debug
+	ctx = &Context{
+		Output: output,
+		Seed:   seed,
+	}
+	return ctx, nil
 }
 
 func (gen *Generator) initAssembler() error {

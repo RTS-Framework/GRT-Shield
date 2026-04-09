@@ -3,12 +3,13 @@
 // the CriticalSize must be aligned with 4 bytes
 
 // struct:
-//   CriticalAddress
-//   CriticalSize
-//   VirtualProtect
-//   WaitForSingleObject
-//   Timer
-//   Key
+//   [ebp + 0*4]  VirtualProtect
+//   [ebp + 1*4]  WaitForSingleObject
+//   [ebp + 2*4]  CriticalAddress
+//   [ebp + 3*4]  CriticalSize
+//   [ebp + 4*4]  ShelterAddress
+//   [ebp + 5*4]  TimerHandle
+//   [ebp + 6*4]  CryptoKey
 
 // steps:
 //   encrypt return address
@@ -45,7 +46,7 @@ entry:
 
   // save fields to non-volatile registers
   mov {{.RegN.ebp}}, eax                       {{igi}} // save structure pointer
-  mov {{.RegN.ebx}}, [{{.RegN.ebp}} + 5*4]     {{igi}} // save crypto key
+  mov {{.RegN.ebx}}, [{{.RegN.ebp}} + 6*4]     {{igi}} // save crypto key
 
   // encrypt return address
   mov {{.RegV.ecx}}, [esp + 2*4]               {{igi}}
@@ -53,8 +54,8 @@ entry:
   mov [esp + 2*4], {{.RegV.ecx}}               {{igi}}
 
   // encrypt the critical memory
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}}]           {{igi}} // get critical address
-  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 1*4]     {{igi}} // set the critical size
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{igi}} // get critical address
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{igi}} // set the critical size
   call xor_buf                                 {{igi}}
 
   // adjust the page protect to PAGE_READWRITE
@@ -65,8 +66,8 @@ entry:
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{igi}} // clear register
   dec {{.RegV.eax}}                            {{igi}} // calcualte 0xFFFFFFFF
   mov edx, {{.RegV.eax}}                       {{igi}} // set INFINITE
-  mov ecx, [{{.RegN.ebp}} + 4*4]               {{igi}} // set handle of hTimer
-  mov eax, [{{.RegN.ebp}} + 3*4]               {{igi}} // get address of WaitForSingleObject
+  mov ecx, [{{.RegN.ebp}} + 5*4]               {{igi}} // set handle of hTimer
+  mov eax, [{{.RegN.ebp}} + 1*4]               {{igi}} // get address of WaitForSingleObject
 
   // save argument about WaitForSingleObject
   push edx                                     {{igi}}
@@ -92,8 +93,8 @@ entry:
   call protect                                 {{igi}}
 
   // decrypt the critical memory
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}}]           {{igi}} // get critical address
-  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 1*4]     {{igi}} // set the critical size
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{igi}} // get critical address
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{igi}} // set the critical size
   call xor_buf                                 {{igi}}
 
   // decrypt return address
@@ -126,11 +127,11 @@ protect:
   sub esp, 0x04                                {{igi}} // for save old protect
   push esp                                     {{igi}} // lpflOldProtect
   push {{.RegV.eax}}                           {{igi}} // new protect
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 1*4]     {{igi}} // set size of critical
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 3*4]     {{igi}} // set size of critical
   push {{.RegV.ecx}}                           {{igi}} // push size
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}}]           {{igi}} // set address of critical
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{igi}} // set address of critical
   push {{.RegV.ecx}}                           {{igi}} // push address
-  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 2*4]     {{igi}} // get address of VirtualProtect
+  mov {{.RegV.eax}}, [{{.RegN.ebp}}]           {{igi}} // get address of VirtualProtect
   call {{.RegV.eax}}                           {{igi}} // call VirtualProtect
   mov {{.RegN.esi}}, [esp]                     {{igi}} // save old protect
   add esp, 0x04                                {{igi}} // restore stack for old protect

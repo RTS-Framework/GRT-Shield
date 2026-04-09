@@ -29,8 +29,8 @@ type testShieldArgs struct {
 	CriticalAddress     uintptr
 	CriticalSize        uintptr
 	ShelterAddress      uintptr
-	Timer               uintptr
-	Key                 uintptr
+	TimerHandle         uintptr
+	CryptoKey           uintptr
 }
 
 func testShield(t *testing.T, shield []byte, sleep time.Duration) {
@@ -61,12 +61,12 @@ func testBuildShieldArgs(t *testing.T, critical []byte, sleep time.Duration) *te
 	)
 	require.True(t, ok == 1, err)
 	ctx := &testShieldArgs{
-		CriticalAddress:     uintptr(unsafe.Pointer(&critical[0])),
-		CriticalSize:        uintptr(len(critical)),
 		VirtualProtect:      procVirtualProtect.Addr(),
 		WaitForSingleObject: procWaitForSingleObject.Addr(),
-		Timer:               hTimer,
-		Key:                 0x12345678,
+		CriticalAddress:     uintptr(unsafe.Pointer(&critical[0])),
+		CriticalSize:        uintptr(len(critical)),
+		TimerHandle:         hTimer,
+		CryptoKey:           0x12345678,
 	}
 	return ctx
 }

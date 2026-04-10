@@ -29,12 +29,6 @@ entry:
   ret                                          {{igi}}
  next:
 
-  // ensure stack is 16 bytes aligned
-  push rbp                                     {{igi}}
-  mov rbp, rsp                                 {{igi}}
-  and rsp, 0xFFFFFFFFFFFFFFF0                  {{igi}}
-  push rbp                                     {{igi}}
-
   // save context
   push {{.RegN.rbp}}                           {{igi}} // for save structure pointer
   push {{.RegN.rbx}}                           {{igi}} // for save crypto key
@@ -45,9 +39,9 @@ entry:
   mov {{.RegN.rbx}}, [{{.RegN.rbp}} + 6*8]     {{igi}} // save crypto key
 
   // encrypt return address
-  mov {{.RegV.rcx}}, [rsp + 2*8]               {{igi}}
+  mov {{.RegV.rcx}}, [rsp + 3*8]               {{igi}}
   xor {{.RegV.rcx}}, {{.RegN.rbx}}             {{igi}}
-  mov [rsp + 2*8], {{.RegV.rcx}}               {{igi}}
+  mov [rsp + 3*8], {{.RegV.rcx}}               {{igi}}
 
   // encrypt the critical memory
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 2*8]     {{igi}} // get critical address
@@ -100,19 +94,14 @@ entry:
   call xor_buf                                 {{igi}}
 
   // decrypt return address
-  mov {{.RegV.rcx}}, [rsp + 2*8]               {{igi}}
+  mov {{.RegV.rcx}}, [rsp + 3*8]               {{igi}}
   xor {{.RegV.rcx}}, {{.RegN.rbx}}             {{igi}}
-  mov [rsp + 2*8], {{.RegV.rcx}}               {{igi}}
+  mov [rsp + 3*8], {{.RegV.rcx}}               {{igi}}
 
   // restore context
   pop {{.RegN.rsi}}                            {{igi}}
   pop {{.RegN.rbx}}                            {{igi}}
   pop {{.RegN.rbp}}                            {{igi}}
-
-  // restore stack and rbp
-  pop rbp                                      {{igi}}
-  mov rsp, rbp                                 {{igi}}
-  pop rbp                                      {{igi}}
   ret                                          {{igi}}
 
 xor_buf:

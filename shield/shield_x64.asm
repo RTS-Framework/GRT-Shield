@@ -111,7 +111,8 @@ entry:
 xor_buf:
   shr {{.RegV.rdx}}, 3                         {{igi}} // calculate the loop count
  loop_xor:
-  xor [{{.RegV.rcx}}], {{.RegN.rbx}}           {{igi}} // encrypt 8 bytes with xor
+  xor [{{.RegV.rcx}}], {{.RegN.rbp}}           {{igi}} // encrypt data with structure pointer
+  xor [{{.RegV.rcx}}], {{.RegN.rbx}}           {{igi}} // encrypt data with crypto key
   add {{.RegV.rcx}}, 8                         {{igi}} // add data address
   dec {{.RegV.rdx}}                            {{igi}} // update loop count
   jnz loop_xor                                 {{igi}} // check need decrypt again

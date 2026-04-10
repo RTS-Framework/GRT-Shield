@@ -38,6 +38,10 @@ entry:
   mov {{.RegN.rbp}}, rcx                       {{igi}} // save structure pointer
   mov {{.RegN.rbx}}, [{{.RegN.rbp}} + 6*8]     {{igi}} // save crypto key
 
+  // destroy CryptoKey in the stack
+  xor {{.RegV.rdx}}, {{.RegV.rdx}}             {{igi}}
+  mov [{{.RegN.rbp}} + 6*8], {{.RegV.rdx}}     {{igi}}
+
   // encrypt return address
   mov {{.RegV.rcx}}, [rsp + 3*8]               {{igi}}
   xor {{.RegV.rcx}}, {{.RegN.rbx}}             {{igi}}

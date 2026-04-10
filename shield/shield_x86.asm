@@ -39,6 +39,10 @@ entry:
   mov {{.RegN.ebp}}, [esp + 4*4]               {{igi}} // save structure pointer
   mov {{.RegN.ebx}}, [{{.RegN.ebp}} + 6*4]     {{igi}} // save crypto key
 
+  // destroy CryptoKey in the stack
+  xor {{.RegV.edx}}, {{.RegV.edx}}             {{igi}}
+  mov [{{.RegN.ebp}} + 6*4], {{.RegV.edx}}     {{igi}}
+
   // encrypt return address
   mov {{.RegV.ecx}}, [esp + 3*4]               {{igi}}
   xor {{.RegV.ecx}}, {{.RegN.ebx}}             {{igi}}

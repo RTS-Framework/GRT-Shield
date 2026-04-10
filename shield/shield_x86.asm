@@ -30,28 +30,19 @@ entry:
   ret 4                                        {{igi}}
  next:
 
-  // store argument before stack alignment
-  mov eax, [esp+4]                             {{igi}}
-
-  // ensure stack is 16 bytes aligned
-  push ebp                                     {{igi}}
-  mov ebp, esp                                 {{igi}}
-  and esp, 0xFFFFFFF0                          {{igi}}
-  push ebp                                     {{igi}}
-
   // save context
   push {{.RegN.ebp}}                           {{igi}} // for save structure pointer
   push {{.RegN.ebx}}                           {{igi}} // for save crypto key
   push {{.RegN.esi}}                           {{igi}} // for save the memory page old protect
 
   // save fields to non-volatile registers
-  mov {{.RegN.ebp}}, eax                       {{igi}} // save structure pointer
+  mov {{.RegN.ebp}}, [esp + 4*4]               {{igi}} // save structure pointer
   mov {{.RegN.ebx}}, [{{.RegN.ebp}} + 6*4]     {{igi}} // save crypto key
 
   // encrypt return address
-  mov {{.RegV.ecx}}, [esp + 2*4]               {{igi}}
+  mov {{.RegV.ecx}}, [esp + 3*4]               {{igi}}
   xor {{.RegV.ecx}}, {{.RegN.ebx}}             {{igi}}
-  mov [esp + 2*4], {{.RegV.ecx}}               {{igi}}
+  mov [esp + 3*4], {{.RegV.ecx}}               {{igi}}
 
   // encrypt the critical memory
   mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{igi}} // get critical address
@@ -98,19 +89,14 @@ entry:
   call xor_buf                                 {{igi}}
 
   // decrypt return address
-  mov {{.RegV.ecx}}, [esp + 2*4]               {{igi}}
+  mov {{.RegV.ecx}}, [esp + 3*4]               {{igi}}
   xor {{.RegV.ecx}}, {{.RegN.ebx}}             {{igi}}
-  mov [esp + 2*4], {{.RegV.ecx}}               {{igi}}
+  mov [esp + 3*4], {{.RegV.ecx}}               {{igi}}
 
   // restore context
   pop {{.RegN.esi}}                            {{igi}}
   pop {{.RegN.ebx}}                            {{igi}}
   pop {{.RegN.ebp}}                            {{igi}}
-
-  // restore stack and ebp
-  pop ebp                                      {{igi}}
-  mov esp, ebp                                 {{igi}}
-  pop ebp                                      {{igi}}
   ret 4                                        {{igi}}
 
 xor_buf:

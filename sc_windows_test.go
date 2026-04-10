@@ -60,7 +60,7 @@ func testBuildShieldArgs(t *testing.T, critical []byte, sleep time.Duration) *te
 		hTimer, uintptr(unsafe.Pointer(&dueTime)), 0, 0, 0, 1,
 	)
 	require.True(t, ok == 1, err)
-	ctx := &testShieldArgs{
+	args := &testShieldArgs{
 		VirtualProtect:      procVirtualProtect.Addr(),
 		WaitForSingleObject: procWaitForSingleObject.Addr(),
 		CriticalAddress:     uintptr(unsafe.Pointer(&critical[0])),
@@ -68,7 +68,7 @@ func testBuildShieldArgs(t *testing.T, critical []byte, sleep time.Duration) *te
 		TimerHandle:         hTimer,
 		CryptoKey:           0x12345678,
 	}
-	return ctx
+	return args
 }
 
 // try to write shield in .text section

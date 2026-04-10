@@ -66,7 +66,7 @@ entry:
 
   // encrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{igi}} // get structure pointer
-  mov {{.RegV.rdx}}, 6*8                       {{igi}} // set the buffer size
+  mov {{.RegV.rdx}}, 7*8                       {{igi}} // set the buffer size
   call xor_buf                                 {{igi}}
 
   // restore argument about WaitForSingleObject
@@ -81,7 +81,7 @@ entry:
 
   // decrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{igi}} // get structure pointer
-  mov {{.RegV.rdx}}, 6*8                       {{igi}} // set the buffer size
+  mov {{.RegV.rdx}}, 7*8                       {{igi}} // set the buffer size
   call xor_buf                                 {{igi}}
 
   // recover the page protect to old protect

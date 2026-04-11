@@ -50,13 +50,14 @@ func main() {
 	ctx, err := generator.Generate(arch, &opts)
 	checkError(err)
 	fmt.Println("seed:", ctx.Seed)
+	fmt.Println("size:", len(ctx.Output))
 	fmt.Printf("save shield to \"%s\"\n", outPath)
 	output := ctx.Output
 	if outMod {
 		// aligned to the memory page size
 		pad := bytes.Repeat([]byte{0x00}, 4096-len(output))
 		output = append(output, pad...)
-		output = dumpBytesHex(output)
+		output = dumpModule(output)
 	}
 	err = os.WriteFile(outPath, output, 0600) // #nosec
 	checkError(err)
@@ -101,7 +102,7 @@ func loadJunkCodeTemplate(dir string) []string {
 	return templates
 }
 
-func dumpBytesHex(b []byte) []byte {
+func dumpModule(b []byte) []byte {
 	n := len(b)
 	builder := bytes.Buffer{}
 	builder.Grow(len("0FFh, ")*n - len(", "))

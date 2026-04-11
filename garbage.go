@@ -63,6 +63,13 @@ type junkCodeCtx struct {
 	Less64 map[string]int
 }
 
+func (gen *Generator) insertGarbageInst() string {
+	if gen.opts.NoGarbage {
+		return ""
+	}
+	return ";" + toDB(gen.garbageInst())
+}
+
 // the output garbage instruction length is no limit.
 func (gen *Generator) garbageInst() []byte {
 	if gen.opts.NoGarbage {

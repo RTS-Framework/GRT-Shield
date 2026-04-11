@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"flag"
 	"fmt"
@@ -16,7 +17,7 @@ var (
 	jcx64 string
 	opts  shield.Options
 
-	outHex  bool
+	outMod  bool
 	outPath string
 )
 
@@ -28,7 +29,7 @@ func init() {
 	flag.StringVar(&opts.ShieldX64, "sid-x64", "", "specify the x64 shield template file path")
 	flag.StringVar(&jcx86, "junk-x86", "", "specify the x86 junk template directory path")
 	flag.StringVar(&jcx64, "junk-x64", "", "specify the x64 junk template directory path")
-	flag.BoolVar(&outHex, "hex", false, "use hexadecimal encoding for output")
+	flag.BoolVar(&outMod, "mod", false, "output hex encoding module for develop")
 	flag.StringVar(&outPath, "out", "", "specify the output file path")
 	flag.Parse()
 }
@@ -51,8 +52,11 @@ func main() {
 	fmt.Println("seed:", ctx.Seed)
 	fmt.Printf("save shield to \"%s\"\n", outPath)
 	output := ctx.Output
-	if outHex {
-		output = []byte(hex.EncodeToString(output))
+	if outMod {
+		// aligned to the memory page size
+		pad := bytes.Repeat([]byte{0x00}, 4096-len(output))
+		output = append(output, pad...)
+		output = dumpBytesHex(output)
 	}
 	err = os.WriteFile(outPath, output, 0600) // #nosec
 	checkError(err)
@@ -68,8 +72,8 @@ func setDefaultOutputName() {
 	case 64:
 		outPath = "shield_x64"
 	}
-	if outHex {
-		outPath += ".hex"
+	if outMod {
+		outPath += ".inst"
 	} else {
 		outPath += ".bin"
 	}
@@ -95,6 +99,35 @@ func loadJunkCodeTemplate(dir string) []string {
 		templates = append(templates, src)
 	}
 	return templates
+}
+
+func dumpBytesHex(b []byte) []byte {
+	n := len(b)
+	builder := bytes.Buffer{}
+	builder.Grow(len("0FFh, ")*n - len(", "))
+	buf := make([]byte, 2)
+	var counter = 0
+	for i := 0; i < n; i++ {
+		if counter == 0 {
+			builder.WriteString("  db ")
+		}
+		hex.Encode(buf, b[i:i+1])
+		builder.WriteString("0")
+		builder.Write(bytes.ToUpper(buf))
+		builder.WriteString("h")
+		if i == n-1 {
+			builder.WriteString("\r\n")
+			break
+		}
+		counter++
+		if counter != 16 {
+			builder.WriteString(", ")
+			continue
+		}
+		counter = 0
+		builder.WriteString("\r\n")
+	}
+	return builder.Bytes()
 }
 
 func checkError(err error) {

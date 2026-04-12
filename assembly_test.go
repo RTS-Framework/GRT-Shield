@@ -15,10 +15,10 @@ func TestBuildRandomRegisterMap(t *testing.T) {
 		err := generator.initAssembler()
 		require.NoError(t, err)
 
-		m := generator.buildRandomRegisterMap()
-		for k, v := range m {
-			require.NotEqual(t, k, v)
-			fmt.Printf("%s -> %s\n", k, v)
+		regMap := generator.buildRandomRegisterMap()
+		for src, dst := range regMap {
+			fmt.Printf("%s -> %s\n", src, dst)
+			require.NotEqual(t, src, dst)
 		}
 	})
 
@@ -27,10 +27,10 @@ func TestBuildRandomRegisterMap(t *testing.T) {
 		err := generator.initAssembler()
 		require.NoError(t, err)
 
-		m := generator.buildRandomRegisterMap()
-		for k, v := range m {
-			require.NotEqual(t, k, v)
-			fmt.Printf("%s -> %s\n", k, v)
+		regMap := generator.buildRandomRegisterMap()
+		for src, dst := range regMap {
+			fmt.Printf("%s -> %s\n", src, dst)
+			require.NotEqual(t, src, dst)
 		}
 	})
 
@@ -39,11 +39,65 @@ func TestBuildRandomRegisterMap(t *testing.T) {
 }
 
 func TestBuildVolatileRegisterMap(t *testing.T) {
+	generator := NewGenerator()
 
+	t.Run("x86", func(t *testing.T) {
+		generator.arch = 32
+		err := generator.initAssembler()
+		require.NoError(t, err)
+
+		regMap := generator.buildVolatileRegisterMap()
+		for src, dst := range regMap {
+			fmt.Printf("%s -> %s\n", src, dst)
+			require.NotEqual(t, src, dst)
+		}
+	})
+
+	t.Run("x64", func(t *testing.T) {
+		generator.arch = 64
+		err := generator.initAssembler()
+		require.NoError(t, err)
+
+		regMap := generator.buildVolatileRegisterMap()
+		for src, dst := range regMap {
+			fmt.Printf("%s -> %s\n", src, dst)
+			require.NotEqual(t, src, dst)
+		}
+	})
+
+	err := generator.Close()
+	require.NoError(t, err)
 }
 
 func TestBuildNonvolatileRegisterMap(t *testing.T) {
+	generator := NewGenerator()
 
+	t.Run("x86", func(t *testing.T) {
+		generator.arch = 32
+		err := generator.initAssembler()
+		require.NoError(t, err)
+
+		regMap := generator.buildNonvolatileRegisterMap()
+		for src, dst := range regMap {
+			fmt.Printf("%s -> %s\n", src, dst)
+			require.NotEqual(t, src, dst)
+		}
+	})
+
+	t.Run("x64", func(t *testing.T) {
+		generator.arch = 64
+		err := generator.initAssembler()
+		require.NoError(t, err)
+
+		regMap := generator.buildNonvolatileRegisterMap()
+		for src, dst := range regMap {
+			fmt.Printf("%s -> %s\n", src, dst)
+			require.NotEqual(t, src, dst)
+		}
+	})
+
+	err := generator.Close()
+	require.NoError(t, err)
 }
 
 func TestPrintInstructions(t *testing.T) {

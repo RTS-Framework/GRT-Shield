@@ -57,11 +57,11 @@ func (gen *Generator) buildRandomRegisterMap() map[string]string {
 	switch gen.arch {
 	case 32:
 		for _, reg := range registerX86 {
-			register[reg] = gen.selectRegister()
+			register[reg] = gen.selectRegister(reg)
 		}
 	case 64:
 		for _, reg := range registerX64 {
-			register[reg] = gen.selectRegister()
+			register[reg] = gen.selectRegister(reg)
 		}
 		gen.buildLowBitRegisterMap(register)
 	}
@@ -81,11 +81,11 @@ func (gen *Generator) buildVolatileRegisterMap() map[string]string {
 	switch gen.arch {
 	case 32:
 		for _, reg := range regVolatileX86 {
-			register[reg] = gen.selectRegister()
+			register[reg] = gen.selectRegister(reg)
 		}
 	case 64:
 		for _, reg := range regVolatileX64 {
-			register[reg] = gen.selectRegister()
+			register[reg] = gen.selectRegister(reg)
 		}
 		gen.buildLowBitRegisterMap(register)
 	}
@@ -105,11 +105,11 @@ func (gen *Generator) buildNonvolatileRegisterMap() map[string]string {
 	switch gen.arch {
 	case 32:
 		for _, reg := range regNonvolatileX86 {
-			register[reg] = gen.selectRegister()
+			register[reg] = gen.selectRegister(reg)
 		}
 	case 64:
 		for _, reg := range regNonvolatileX64 {
-			register[reg] = gen.selectRegister()
+			register[reg] = gen.selectRegister(reg)
 		}
 		gen.buildLowBitRegisterMap(register)
 	}
@@ -126,12 +126,21 @@ func (gen *Generator) buildLowBitRegisterMap(register map[string]string) {
 }
 
 // selectRegister is used to make sure each register will be selected once.
-func (gen *Generator) selectRegister() string {
-	idx := gen.rand.Intn(len(gen.regBox))
-	reg := gen.regBox[idx]
+func (gen *Generator) selectRegister(reg string) string {
+	var (
+		i int
+		r string
+	)
+	for {
+		i = gen.rand.Intn(len(gen.regBox))
+		r = gen.regBox[i]
+		if r != reg {
+			break
+		}
+	}
 	// remove selected register
-	gen.regBox = append(gen.regBox[:idx], gen.regBox[idx+1:]...)
-	return reg
+	gen.regBox = append(gen.regBox[:i], gen.regBox[i+1:]...)
+	return r
 }
 
 func printInstructions(src []byte, mode int) (string, string, error) {

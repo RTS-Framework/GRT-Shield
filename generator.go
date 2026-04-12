@@ -23,9 +23,6 @@ type Generator struct {
 	// context arguments
 	arch int
 	opts *Options
-
-	// for select random register
-	regBox []string
 }
 
 // Options contains options about generate shield.

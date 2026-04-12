@@ -59,6 +59,36 @@ func (gen *Generator) buildRandomRegisterMap() map[string]string {
 	return reg
 }
 
+func (gen *Generator) buildVolatileRegisterMap() map[string]string {
+	var registers []string
+	switch gen.arch {
+	case 32:
+		registers = regVolatileX86
+	case 64:
+		registers = regVolatileX64
+	}
+	reg := gen.shuffleRegisterMap(registers)
+	if gen.arch == 64 {
+		gen.buildLowBitRegisterMap(reg)
+	}
+	return reg
+}
+
+func (gen *Generator) buildNonvolatileRegisterMap() map[string]string {
+	var registers []string
+	switch gen.arch {
+	case 32:
+		registers = regNonvolatileX86
+	case 64:
+		registers = regNonvolatileX64
+	}
+	reg := gen.shuffleRegisterMap(registers)
+	if gen.arch == 64 {
+		gen.buildLowBitRegisterMap(reg)
+	}
+	return reg
+}
+
 func (gen *Generator) shuffleRegisterMap(registers []string) map[string]string {
 	src := registers
 	dst := slices.Clone(registers)
@@ -66,13 +96,14 @@ func (gen *Generator) shuffleRegisterMap(registers []string) map[string]string {
 		gen.rand.Shuffle(len(dst), func(i, j int) {
 			dst[i], dst[j] = dst[j], dst[i]
 		})
-		ok := true
+		var same bool
 		for i := 0; i < len(src); i++ {
 			if src[i] == dst[i] {
-				ok = false
+				same = true
+				break
 			}
 		}
-		if ok {
+		if !same {
 			break
 		}
 	}
@@ -83,82 +114,13 @@ func (gen *Generator) shuffleRegisterMap(registers []string) map[string]string {
 	return reg
 }
 
-func (gen *Generator) buildVolatileRegisterMap() map[string]string {
-	var registers []string
-	switch gen.arch {
-	case 32:
-		registers = slices.Clone(regVolatileX86)
-	case 64:
-		registers = slices.Clone(regVolatileX64)
-	}
-	gen.regBox = registers
-	regMap := make(map[string]string, len(registers))
-	switch gen.arch {
-	case 32:
-		for _, reg := range regVolatileX86 {
-			regMap[reg] = gen.selectRegisterMap(reg)
-		}
-	case 64:
-		for _, reg := range regVolatileX64 {
-			regMap[reg] = gen.selectRegisterMap(reg)
-		}
-		gen.buildLowBitRegisterMap(regMap)
-	}
-	return regMap
-}
-
-func (gen *Generator) buildNonvolatileRegisterMap() map[string]string {
-	var registers []string
-	switch gen.arch {
-	case 32:
-		registers = slices.Clone(regNonvolatileX86)
-	case 64:
-		registers = slices.Clone(regNonvolatileX64)
-	}
-	gen.regBox = registers
-	regMap := make(map[string]string, len(registers))
-	switch gen.arch {
-	case 32:
-		for _, reg := range regNonvolatileX86 {
-			regMap[reg] = gen.selectRegisterMap(reg)
-		}
-	case 64:
-		for _, reg := range regNonvolatileX64 {
-			regMap[reg] = gen.selectRegisterMap(reg)
-		}
-		gen.buildLowBitRegisterMap(regMap)
-	}
-	return regMap
-}
-
+// build register map about low dword
 func (gen *Generator) buildLowBitRegisterMap(regMap map[string]string) {
-	// build register map about low dword
 	low := make(map[string]string, len(regMap))
 	for src, dst := range regMap {
 		low[toRegDWORD(src)] = toRegDWORD(dst)
 	}
 	maps.Copy(regMap, low)
-}
-
-// selectRegisterMap is used to make sure each register will be selected once.
-func (gen *Generator) selectRegisterMap(src string) string {
-	var (
-		idx int
-		dst string
-	)
-	for {
-		idx = gen.rand.Intn(len(gen.regBox))
-		dst = gen.regBox[idx]
-		if dst != src {
-			break
-		}
-		if len(gen.regBox) <= 1 {
-			break
-		}
-	}
-	// remove selected register
-	gen.regBox = append(gen.regBox[:idx], gen.regBox[idx+1:]...)
-	return dst
 }
 
 func printInstructions(src []byte, mode int) (string, string, error) {

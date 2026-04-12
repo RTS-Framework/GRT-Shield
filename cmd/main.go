@@ -42,8 +42,8 @@ func main() {
 	if outPath == "" {
 		setDefaultOutputName()
 	}
-	opts.JunkCodeX86 = loadJunkCodeTemplate(jcx86)
-	opts.JunkCodeX64 = loadJunkCodeTemplate(jcx64)
+	opts.JunkCodeX86 = loadJunkCodeTemplate(32, jcx86)
+	opts.JunkCodeX64 = loadJunkCodeTemplate(64, jcx64)
 
 	generator := shield.NewGenerator()
 
@@ -80,7 +80,7 @@ func setDefaultOutputName() {
 	}
 }
 
-func loadJunkCodeTemplate(dir string) []string {
+func loadJunkCodeTemplate(arch int, dir string) []string {
 	if dir == "" {
 		return nil
 	}
@@ -94,10 +94,10 @@ func loadJunkCodeTemplate(dir string) []string {
 		}
 		data, err := os.ReadFile(filepath.Join(dir, file.Name())) // #nosec
 		checkError(err)
-		src := string(data)
-		_, _, err = shield.InspectJunkCodeTemplate(arch, src)
+		template := string(data)
+		_, _, err = shield.InspectJunkCodeTemplate(arch, template)
 		checkError(err)
-		templates = append(templates, src)
+		templates = append(templates, template)
 	}
 	return templates
 }

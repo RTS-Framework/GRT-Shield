@@ -1,12 +1,15 @@
 package shield
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"maps"
 	"slices"
 	"strconv"
 	"strings"
+
+	"golang.org/x/arch/x86/x86asm"
 )
 
 var (
@@ -129,6 +132,63 @@ func (gen *Generator) selectRegister() string {
 	// remove selected register
 	gen.regBox = append(gen.regBox[:idx], gen.regBox[idx+1:]...)
 	return reg
+}
+
+func printInstructions(src []byte, mode int) (string, string, error) {
+	binHex := strings.Builder{}
+	insts := strings.Builder{}
+	for len(src) > 0 {
+		inst, err := x86asm.Decode(src, mode)
+		if err != nil {
+			return "", "", err
+		}
+		b := src[:inst.Len]
+		binHex.WriteString(printAssemblyBinHex(&inst, b))
+		binHex.Write([]byte("\r\n"))
+		insts.WriteString(printAssemblyInstruction(&inst))
+		insts.Write([]byte("\r\n"))
+		src = src[inst.Len:]
+	}
+	return binHex.String(), insts.String(), nil
+}
+
+func printAssemblyBinHex(inst *x86asm.Inst, b []byte) string {
+	var bin strings.Builder
+	switch {
+	case inst.PCRelOff != 0:
+		s1 := strings.ToUpper(hex.EncodeToString(b[:inst.PCRelOff]))
+		s2 := strings.ToUpper(hex.EncodeToString(b[inst.PCRelOff:]))
+		bin.WriteString(s1)
+		bin.WriteString(" ")
+		bin.WriteString(s2)
+	default:
+		s := strings.ToUpper(hex.EncodeToString(b))
+		bin.WriteString(s)
+	}
+	return bin.String()
+}
+
+func printAssemblyInstruction(inst *x86asm.Inst) string {
+	var buf bytes.Buffer
+	for _, p := range inst.Prefix {
+		if p == 0 {
+			break
+		}
+		if p&x86asm.PrefixImplicit != 0 {
+			continue
+		}
+		_, _ = fmt.Fprintf(&buf, "%s ", strings.ToLower(p.String()))
+	}
+	_, _ = fmt.Fprintf(&buf, "%s", strings.ToLower(inst.Op.String()))
+	sep := " "
+	for _, v := range inst.Args {
+		if v == nil {
+			break
+		}
+		_, _ = fmt.Fprintf(&buf, "%s%s", sep, strings.ToLower(v.String()))
+		sep = ", "
+	}
+	return buf.String()
 }
 
 func toDB(b []byte) string {

@@ -46,12 +46,16 @@ func main() {
 	opts.JunkCodeX64 = loadJunkCodeTemplate(64, jcx64)
 
 	generator := shield.NewGenerator()
-
 	ctx, err := generator.Generate(arch, &opts)
 	checkError(err)
+
+	fmt.Println("==============Context===============")
 	fmt.Println("seed:", ctx.Seed)
 	fmt.Println("size:", len(ctx.Output))
-	fmt.Printf("save shield to \"%s\"\n", outPath)
+	fmt.Println("====================================")
+	fmt.Println(ctx.ShieldInst)
+	fmt.Println("====================================")
+
 	output := ctx.Output
 	if outMod {
 		// aligned to the memory page size
@@ -61,6 +65,7 @@ func main() {
 	}
 	err = os.WriteFile(outPath, output, 0600) // #nosec
 	checkError(err)
+	fmt.Printf("save output shield to \"%s\"\n", outPath)
 
 	err = generator.Close()
 	checkError(err)

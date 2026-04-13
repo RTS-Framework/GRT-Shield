@@ -151,6 +151,7 @@ func (gen *Generator) buildJunkCode(src string) (string, error) {
 	tpl, err := template.New("junk_code").Funcs(template.FuncMap{
 		"db":  toDB,
 		"hex": toHex,
+		"igi": gen.insertGarbageInst,
 	}).Parse(src)
 	if err != nil {
 		return "", fmt.Errorf("invalid junk code template: %s", err)

@@ -48,8 +48,10 @@ type Options struct {
 
 // Context contains the output and context data in Generate.
 type Context struct {
-	Output []byte `json:"output"`
-	Seed   int64  `json:"seed"`
+	Output     []byte `json:"output"`
+	ShieldHex  string `json:"shield_hex"`
+	ShieldInst string `json:"shield_inst"`
+	Seed       int64  `json:"seed"`
 }
 
 // NewGenerator is used to create a shield generator.
@@ -105,10 +107,16 @@ func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error
 	if err != nil {
 		return nil, fmt.Errorf("failed to assemble shield source: %s", err)
 	}
+	binHex, insts, err := printInstructions(output, arch)
+	if err != nil {
+		return nil, fmt.Errorf("failed to print instructions: %s", err)
+	}
 	// build context for test and debug
 	ctx = &Context{
-		Output: output,
-		Seed:   seed,
+		Output:     output,
+		ShieldHex:  binHex,
+		ShieldInst: insts,
+		Seed:       seed,
 	}
 	return ctx, nil
 }

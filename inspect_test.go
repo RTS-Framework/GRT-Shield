@@ -29,6 +29,15 @@ func TestInspectShieldTemplate(t *testing.T) {
 		require.Nil(t, inst)
 		require.Zero(t, asm)
 	})
+
+	t.Run("invalid template", func(t *testing.T) {
+		asm, inst, err := InspectShieldTemplate(64, "invalid")
+		errStr := "failed to assemble shield: failed to assemble: "
+		errStr += "Invalid mnemonic (KS_ERR_ASM_MNEMONICFAIL)"
+		require.EqualError(t, err, errStr)
+		require.Nil(t, inst)
+		require.Zero(t, asm)
+	})
 }
 
 func TestInspectJunkCodeTemplate(t *testing.T) {
@@ -53,6 +62,15 @@ func TestInspectJunkCodeTemplate(t *testing.T) {
 	t.Run("invalid arch", func(t *testing.T) {
 		asm, inst, err := InspectJunkCodeTemplate(123, "")
 		require.EqualError(t, err, "unsupported architecture: 123")
+		require.Nil(t, inst)
+		require.Zero(t, asm)
+	})
+
+	t.Run("invalid template", func(t *testing.T) {
+		asm, inst, err := InspectJunkCodeTemplate(64, "invalid")
+		errStr := "failed to assemble junk code: failed to assemble: "
+		errStr += "Invalid mnemonic (KS_ERR_ASM_MNEMONICFAIL)"
+		require.EqualError(t, err, errStr)
 		require.Nil(t, inst)
 		require.Zero(t, asm)
 	})

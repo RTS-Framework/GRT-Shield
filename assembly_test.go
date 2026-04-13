@@ -7,6 +7,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	testAddX86 = []byte{
+		0x31, 0xC0, //               xor eax, eax
+		0x03, 0x44, 0x24, 0x04, //   add eax, [esp+04]
+		0x03, 0x44, 0x24, 0x08, //   add eax, [esp+08]
+		0xC2, 0x08, 0x00, //         ret 8
+	}
+
+	testAddX64 = []byte{
+		0x31, 0xC0, //               xor eax, eax
+		0x48, 0x01, 0xC8, //         add rax, rcx
+		0x48, 0x01, 0xD0, //         add rax, rdx
+		0xC3, //                     ret
+	}
+)
+
 func TestBuildRandomRegisterMap(t *testing.T) {
 	generator := NewGenerator()
 
@@ -101,7 +117,19 @@ func TestBuildNonvolatileRegisterMap(t *testing.T) {
 }
 
 func TestPrintInstructions(t *testing.T) {
+	t.Run("x86", func(t *testing.T) {
+		binHex, insts, err := printInstructions(testAddX86, 32)
+		require.NoError(t, err)
+		fmt.Println(binHex)
+		fmt.Println(insts)
+	})
 
+	t.Run("x64", func(t *testing.T) {
+		binHex, insts, err := printInstructions(testAddX64, 64)
+		require.NoError(t, err)
+		fmt.Println(binHex)
+		fmt.Println(insts)
+	})
 }
 
 func TestToDB(t *testing.T) {

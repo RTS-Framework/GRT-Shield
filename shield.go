@@ -3,6 +3,7 @@ package shield
 import (
 	"bytes"
 	"embed"
+	"errors"
 	"fmt"
 	"text/template"
 )
@@ -24,7 +25,12 @@ type shieldCtx struct {
 	RegN map[string]string
 }
 
-func (gen *Generator) buildShield(src string) (string, error) {
+func (gen *Generator) buildShield(src string) (output string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New(fmt.Sprint(r))
+		}
+	}()
 	var shield string
 	switch gen.arch {
 	case 32:

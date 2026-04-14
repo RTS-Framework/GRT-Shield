@@ -30,18 +30,20 @@ entry:
   jnz next_3
   {{igi}}
  next_3:
+  {{if .Switch.E}}
   {{igi}}
+  {{end}}
   jmp leave
   {{end}}
 
-  {{if .Switch.E}}
+  {{if .Switch.F}}
   ror {{.Reg.rax}}, {{.Less32.A}}
   xor {{.Reg.rax}}, {{.Reg.rdi}}
   rol {{.Reg.rax}}, {{.Less32.B}}
   call func_3
   {{end}}
 
-leave:
+ leave:
   pop {{.Reg.rax}}
   popfq
   jmp exit
@@ -53,7 +55,7 @@ func_1:
 func_2:
   push {{.Reg.rbx}}
   mov {{.Reg.rbx}}, {{.Reg.rcx}}
-  {{if .Switch.F}}
+  {{if .Switch.G}}
     test {{.Reg.rbx}}, {{.Reg.rbx}}
     jnz next_2
     {{igi}}
@@ -65,7 +67,7 @@ func_2:
 
 func_3:
   rol {{.Reg.rax}}, {{.Less32.C}}
-  {{if .Switch.E}}
+  {{if .Switch.H}}
   {{igi}}
   {{end}}
   ret

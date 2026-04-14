@@ -55,6 +55,7 @@ func main() {
 	fmt.Println("====================================")
 	fmt.Println(ctx.ShieldInst)
 	fmt.Println("====================================")
+	fmt.Println()
 
 	output := ctx.Output
 	if outMod {

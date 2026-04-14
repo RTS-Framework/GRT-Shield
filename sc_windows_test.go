@@ -17,10 +17,11 @@ import (
 var (
 	modKernel32 = syscall.NewLazyDLL("kernel32.dll")
 
-	procVirtualProtect       = modKernel32.NewProc("VirtualProtect")
-	procWaitForSingleObject  = modKernel32.NewProc("WaitForSingleObject")
-	procCreateWaitableTimerA = modKernel32.NewProc("CreateWaitableTimerA")
-	procSetWaitableTimer     = modKernel32.NewProc("SetWaitableTimer")
+	procVirtualProtect        = modKernel32.NewProc("VirtualProtect")
+	procWaitForSingleObject   = modKernel32.NewProc("WaitForSingleObject")
+	procCreateWaitableTimerA  = modKernel32.NewProc("CreateWaitableTimerA")
+	procSetWaitableTimer      = modKernel32.NewProc("SetWaitableTimer")
+	procFlushInstructionCache = modKernel32.NewProc("FlushInstructionCache")
 )
 
 type testShieldArgs struct {
@@ -78,15 +79,22 @@ func testDeployShield(t *testing.T, shield []byte) uintptr {
 	img, err := pe.Open(exe)
 	require.NoError(t, err)
 
-	text := img.Section(".text")
-	require.NotNil(t, text)
-	cave := text.VirtualSize - text.Size
-	if int(cave) < len(shield) {
+	// calculate the code cave size
+	text := img.Sections[0]
+	require.Equal(t, text.Name, ".text")
+	var cave uint32
+	pageSize := uint32(0x1000)
+	pageOffset := text.VirtualSize & (pageSize - 1)
+	if pageOffset != 0 {
+		cave = pageSize - pageOffset
+	}
+	if int(cave) <= len(shield) {
 		return loadShellcode(t, shield)
 	}
 
+	// write shield to the code cave
 	peb := windows.RtlGetCurrentPeb()
-	address := peb.ImageBaseAddress + 0x1000 + uintptr(text.Size)
+	address := peb.ImageBaseAddress + uintptr(text.VirtualAddress+text.VirtualSize)
 	size := uintptr(len(shield))
 	var old uint32
 	err = windows.VirtualProtect(address, size, windows.PAGE_READWRITE, &old)
@@ -97,6 +105,10 @@ func testDeployShield(t *testing.T, shield []byte) uintptr {
 
 	err = windows.VirtualProtect(address, size, old, &old)
 	require.NoError(t, err)
+	r1, _, err := procFlushInstructionCache.Call(
+		uintptr(windows.CurrentProcess()), address, size,
+	)
+	require.NotZero(t, r1, err)
 	return address
 }
 

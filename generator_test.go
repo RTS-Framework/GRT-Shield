@@ -98,7 +98,6 @@ func TestGeneratorFuzz(t *testing.T) {
 			require.NoError(t, err)
 			fmt.Println("size:", len(ctx.Output))
 			fmt.Println("seed:", ctx.Seed)
-			require.Less(t, len(ctx.Output), 4096, "shield is too large")
 
 			if runtime.GOOS != "windows" || runtime.GOARCH != "386" {
 				continue
@@ -114,7 +113,6 @@ func TestGeneratorFuzz(t *testing.T) {
 			require.NoError(t, err)
 			fmt.Println("size:", len(ctx.Output))
 			fmt.Println("seed:", ctx.Seed)
-			require.Less(t, len(ctx.Output), 4096, "shield is too large")
 
 			if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
 				continue

@@ -12,6 +12,13 @@ import (
 	"github.com/For-ACGN/go-keystone"
 )
 
+// MaxShieldSize is the maximum supported shield size.
+// Reference the shield stub at the tail of Gleam-RT.
+const MaxShieldSize = 4096
+
+// ErrShieldSizeTooLarge is used to retry generate.
+var ErrShieldSizeTooLarge = errors.New("shield size is too large")
+
 // Generator is the runtime shield generator.
 type Generator struct {
 	rand *rand.Rand
@@ -106,6 +113,9 @@ func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error
 	output, err := gen.assemble(shield)
 	if err != nil {
 		return nil, fmt.Errorf("failed to assemble shield source: %s", err)
+	}
+	if len(output) > MaxShieldSize {
+		return nil, ErrShieldSizeTooLarge
 	}
 	binHex, insts, err := printInstructions(output, arch)
 	if err != nil {

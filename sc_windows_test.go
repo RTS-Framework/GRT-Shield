@@ -2,8 +2,8 @@ package shield
 
 import (
 	"debug/pe"
-	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"syscall"
 	"testing"
@@ -40,8 +40,9 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	criticalAddr := uintptr(unsafe.Pointer(&critical[0]))
 
 	address := testDeployShield(t, shield)
-	fmt.Printf("data address:   0x%X\n", criticalAddr)
-	fmt.Printf("shield address: 0x%X\n", address)
+	t.Logf("data address:   0x%X\n", criticalAddr)
+	t.Logf("shield address: 0x%X\n", address)
+
 	args := testBuildShieldArgs(t, critical, sleep)
 	now := time.Now()
 
@@ -49,6 +50,9 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 
 	require.Greater(t, time.Since(now), sleep)
 	require.True(t, strings.HasPrefix(string(critical), "runtime instruction"))
+
+	err := windows.CloseHandle(windows.Handle(args.TimerHandle))
+	require.NoError(t, err)
 }
 
 func testBuildShieldArgs(t *testing.T, critical []byte, sleep time.Duration) *testShieldArgs {
@@ -80,15 +84,25 @@ func testDeployShield(t *testing.T, shield []byte) uintptr {
 	require.NoError(t, err)
 
 	// calculate the code cave size
+	var (
+		pageSize uint32
+		caveSize uint32
+	)
+	switch runtime.GOARCH {
+	case "386":
+		pageSize = img.OptionalHeader.(*pe.OptionalHeader32).SectionAlignment
+	case "amd64":
+		pageSize = img.OptionalHeader.(*pe.OptionalHeader64).SectionAlignment
+	default:
+		t.Fatal("unsupported architecture")
+	}
 	text := img.Sections[0]
 	require.Equal(t, text.Name, ".text")
-	var cave uint32
-	pageSize := uint32(0x1000)
 	pageOffset := text.VirtualSize & (pageSize - 1)
 	if pageOffset != 0 {
-		cave = pageSize - pageOffset
+		caveSize = pageSize - pageOffset
 	}
-	if int(cave) <= len(shield) {
+	if int(caveSize) <= len(shield) {
 		return loadShellcode(t, shield)
 	}
 

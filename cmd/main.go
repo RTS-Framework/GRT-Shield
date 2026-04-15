@@ -60,7 +60,7 @@ func main() {
 	output := ctx.Output
 	if outMod {
 		// aligned to the memory page size
-		pad := bytes.Repeat([]byte{0x00}, 4096-len(output))
+		pad := bytes.Repeat([]byte{0x00}, shield.MaxShieldSize-len(output))
 		output = append(output, pad...)
 		output = dumpModule(output)
 	}
@@ -98,7 +98,11 @@ func loadJunkCodeTemplate(arch int, dir string) []string {
 		if file.IsDir() {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(dir, file.Name())) // #nosec
+		name := file.Name()
+		if filepath.Ext(name) != ".asm" {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(dir, name)) // #nosec
 		checkError(err)
 		template := string(data)
 		_, _, err = shield.InspectJunkCodeTemplate(arch, template)

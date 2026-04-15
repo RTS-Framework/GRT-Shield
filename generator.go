@@ -185,12 +185,14 @@ func (gen *Generator) Close() error {
 		if err != nil {
 			return err
 		}
+		gen.ase32 = nil
 	}
 	if gen.ase64 != nil {
 		err := gen.ase64.Close()
 		if err != nil {
 			return err
 		}
+		gen.ase64 = nil
 	}
 	return nil
 }

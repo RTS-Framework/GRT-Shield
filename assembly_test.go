@@ -120,15 +120,15 @@ func TestPrintInstructions(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
 		binHex, insts, err := printInstructions(testAddX86, 32)
 		require.NoError(t, err)
-		fmt.Println(binHex)
-		fmt.Println(insts)
+		t.Log(binHex)
+		t.Log(insts)
 	})
 
 	t.Run("x64", func(t *testing.T) {
 		binHex, insts, err := printInstructions(testAddX64, 64)
 		require.NoError(t, err)
-		fmt.Println(binHex)
-		fmt.Println(insts)
+		t.Log(binHex)
+		t.Log(insts)
 	})
 }
 

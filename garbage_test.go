@@ -1,7 +1,6 @@
 package shield
 
 import (
-	"fmt"
 	"runtime"
 	"testing"
 
@@ -18,7 +17,7 @@ func TestGarbage(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
 		ctx, err := generator.Generate(32, opts)
 		require.NoError(t, err)
-		fmt.Println("size:", len(ctx.Output))
+		t.Log("size:", len(ctx.Output))
 
 		if runtime.GOOS != "windows" || runtime.GOARCH != "386" {
 			return
@@ -30,7 +29,7 @@ func TestGarbage(t *testing.T) {
 	t.Run("x64", func(t *testing.T) {
 		ctx, err := generator.Generate(64, opts)
 		require.NoError(t, err)
-		fmt.Println("size:", len(ctx.Output))
+		t.Log("size:", len(ctx.Output))
 
 		if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
 			return

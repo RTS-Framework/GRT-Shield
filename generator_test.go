@@ -1,7 +1,6 @@
 package shield
 
 import (
-	"fmt"
 	"runtime"
 	"testing"
 	"time"
@@ -15,8 +14,8 @@ func TestGenerator(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
 		ctx, err := generator.Generate(32, nil)
 		require.NoError(t, err)
-		fmt.Println("size:", len(ctx.Output))
-		fmt.Println("seed:", ctx.Seed)
+		t.Log("size:", len(ctx.Output))
+		t.Log("seed:", ctx.Seed)
 
 		if runtime.GOOS != "windows" || runtime.GOARCH != "386" {
 			return
@@ -28,8 +27,8 @@ func TestGenerator(t *testing.T) {
 	t.Run("x64", func(t *testing.T) {
 		ctx, err := generator.Generate(64, nil)
 		require.NoError(t, err)
-		fmt.Println("size:", len(ctx.Output))
-		fmt.Println("seed:", ctx.Seed)
+		t.Log("size:", len(ctx.Output))
+		t.Log("seed:", ctx.Seed)
 
 		if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
 			return
@@ -96,8 +95,8 @@ func TestGeneratorFuzz(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			ctx, err := generator.Generate(32, nil)
 			require.NoError(t, err)
-			fmt.Println("size:", len(ctx.Output))
-			fmt.Println("seed:", ctx.Seed)
+			t.Log("size:", len(ctx.Output))
+			t.Log("seed:", ctx.Seed)
 
 			if runtime.GOOS != "windows" || runtime.GOARCH != "386" {
 				continue
@@ -111,8 +110,8 @@ func TestGeneratorFuzz(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			ctx, err := generator.Generate(64, nil)
 			require.NoError(t, err)
-			fmt.Println("size:", len(ctx.Output))
-			fmt.Println("seed:", ctx.Seed)
+			t.Log("size:", len(ctx.Output))
+			t.Log("seed:", ctx.Seed)
 
 			if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
 				continue

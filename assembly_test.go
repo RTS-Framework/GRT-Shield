@@ -1,7 +1,6 @@
 package shield
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,7 +32,7 @@ func TestBuildRandomRegisterMap(t *testing.T) {
 
 		regMap := generator.buildRandomRegisterMap()
 		for src, dst := range regMap {
-			fmt.Printf("%s -> %s\n", src, dst)
+			t.Logf("%s -> %s\n", src, dst)
 			require.NotEqual(t, src, dst)
 		}
 	})
@@ -45,7 +44,7 @@ func TestBuildRandomRegisterMap(t *testing.T) {
 
 		regMap := generator.buildRandomRegisterMap()
 		for src, dst := range regMap {
-			fmt.Printf("%s -> %s\n", src, dst)
+			t.Logf("%s -> %s\n", src, dst)
 			require.NotEqual(t, src, dst)
 		}
 	})
@@ -64,7 +63,7 @@ func TestBuildVolatileRegisterMap(t *testing.T) {
 
 		regMap := generator.buildVolatileRegisterMap()
 		for src, dst := range regMap {
-			fmt.Printf("%s -> %s\n", src, dst)
+			t.Logf("%s -> %s\n", src, dst)
 			require.NotEqual(t, src, dst)
 		}
 	})
@@ -76,7 +75,7 @@ func TestBuildVolatileRegisterMap(t *testing.T) {
 
 		regMap := generator.buildVolatileRegisterMap()
 		for src, dst := range regMap {
-			fmt.Printf("%s -> %s\n", src, dst)
+			t.Logf("%s -> %s\n", src, dst)
 			require.NotEqual(t, src, dst)
 		}
 	})
@@ -95,7 +94,7 @@ func TestBuildNonvolatileRegisterMap(t *testing.T) {
 
 		regMap := generator.buildNonvolatileRegisterMap()
 		for src, dst := range regMap {
-			fmt.Printf("%s -> %s\n", src, dst)
+			t.Logf("%s -> %s\n", src, dst)
 			require.NotEqual(t, src, dst)
 		}
 	})
@@ -107,7 +106,7 @@ func TestBuildNonvolatileRegisterMap(t *testing.T) {
 
 		regMap := generator.buildNonvolatileRegisterMap()
 		for src, dst := range regMap {
-			fmt.Printf("%s -> %s\n", src, dst)
+			t.Logf("%s -> %s\n", src, dst)
 			require.NotEqual(t, src, dst)
 		}
 	})

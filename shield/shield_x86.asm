@@ -60,14 +60,14 @@ entry:
   // prepare argument before encrypt stack
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{igi}} // clear register
   dec {{.RegV.eax}}                            {{igi}} // calcualte 0xFFFFFFFF
-  mov edx, {{.RegV.eax}}                       {{igi}} // set INFINITE
-  mov ecx, [{{.RegN.ebp}} + 5*4]               {{igi}} // set handle of hTimer
-  mov eax, [{{.RegN.ebp}} + 1*4]               {{igi}} // get address of WaitForSingleObject
+  mov {{.RegV.edx}}, {{.RegV.eax}}             {{igi}} // set INFINITE
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 5*4]     {{igi}} // set handle of hTimer
+  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 1*4]     {{igi}} // get address of WaitForSingleObject
 
   // save argument about WaitForSingleObject
-  push edx                                     {{igi}}
-  push ecx                                     {{igi}}
-  push eax                                     {{igi}}
+  push {{.RegV.edx}}                           {{igi}}
+  push {{.RegV.ecx}}                           {{igi}}
+  push {{.RegV.eax}}                           {{igi}}
 
   // encrypt argument structure
   mov {{.RegV.ecx}}, {{.RegN.ebp}}             {{igi}} // get structure pointer
@@ -75,8 +75,8 @@ entry:
   call xor_buf                                 {{igi}}
 
   // Sleep with WaitForSingleObject
-  pop eax                                      {{igi}} // get WaitForSingleObject address
-  call eax                                     {{igi}} // call WaitForSingleObject
+  pop {{.RegV.eax}}                            {{igi}} // get WaitForSingleObject address
+  call {{.RegV.eax}}                           {{igi}} // call WaitForSingleObject
 
   // decrypt argument structure
   mov {{.RegV.ecx}}, {{.RegN.ebp}}             {{igi}} // get structure pointer

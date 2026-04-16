@@ -63,19 +63,18 @@ type junkCodeCtx struct {
 	Less64 map[string]int
 }
 
-func (gen *Generator) insertGarbageInst() string {
-	if gen.opts.NoGarbage {
+func (gen *Generator) insertJunkInst() string {
+	if gen.opts.NoJunkCode {
 		return ""
 	}
-	return ";" + toDB(gen.garbageInst())
+	return ";" + toDB(gen.buildJunkInst())
 }
 
-// the output garbage instruction length is no limit.
-func (gen *Generator) garbageInst() []byte {
-	if gen.opts.NoGarbage {
+func (gen *Generator) buildJunkInst() []byte {
+	if gen.opts.NoJunkCode {
 		return nil
 	}
-	// random not insert garbage
+	// random not insert junk instruction
 	if gen.rand.Intn(10) == 0 {
 		return nil
 	}
@@ -91,13 +90,13 @@ func (gen *Generator) garbageInst() []byte {
 	case 0:
 		return nil
 	case 1:
-		return gen.garbageMultiByteNOP()
+		return gen.junkMultiByteNOP()
 	default:
-		return gen.garbageTemplate()
+		return gen.junkTemplate()
 	}
 }
 
-func (gen *Generator) garbageMultiByteNOP() []byte {
+func (gen *Generator) junkMultiByteNOP() []byte {
 	var nop []byte
 	switch gen.rand.Intn(2) {
 	case 0:
@@ -108,7 +107,7 @@ func (gen *Generator) garbageMultiByteNOP() []byte {
 	return nop
 }
 
-func (gen *Generator) garbageTemplate() []byte {
+func (gen *Generator) junkTemplate() []byte {
 	var junkCodes []string
 	switch gen.arch {
 	case 32:
@@ -151,7 +150,7 @@ func (gen *Generator) buildJunkCode(src string) (string, error) {
 	tpl, err := template.New("junk_code").Funcs(template.FuncMap{
 		"db":  toDB,
 		"hex": toHex,
-		"igi": gen.insertGarbageInst,
+		"iji": gen.insertJunkInst,
 	}).Parse(src)
 	if err != nil {
 		return "", fmt.Errorf("invalid junk code template: %s", err)

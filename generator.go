@@ -69,7 +69,7 @@ func NewGenerator() *Generator {
 	if err == nil {
 		seed = int64(binary.LittleEndian.Uint64(buf)) // #nosec G115
 	} else {
-		seed = time.Now().UTC().UnixNano()
+		seed = time.Now().UnixNano()
 	}
 	generator := Generator{
 		rand: rand.New(rand.NewSource(seed)), // #nosec

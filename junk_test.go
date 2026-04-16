@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGarbage(t *testing.T) {
+func TestJunkCode(t *testing.T) {
 	generator := NewGenerator()
 
 	opts := &Options{
-		NoGarbage: false,
+		NoJunkCode: false,
 	}
 
 	t.Run("x86", func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestGarbage(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestGarbageTemplateFuzz(t *testing.T) {
+func TestJunkTemplateFuzz(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
 		generator := NewGenerator()
 		generator.arch = 32
@@ -51,7 +51,7 @@ func TestGarbageTemplateFuzz(t *testing.T) {
 		require.NoError(t, err)
 
 		for i := 0; i < 1000; i++ {
-			data := generator.garbageTemplate()
+			data := generator.junkTemplate()
 			require.NotEmpty(t, data)
 		}
 
@@ -67,7 +67,7 @@ func TestGarbageTemplateFuzz(t *testing.T) {
 		require.NoError(t, err)
 
 		for i := 0; i < 1000; i++ {
-			data := generator.garbageTemplate()
+			data := generator.junkTemplate()
 			require.NotEmpty(t, data)
 		}
 

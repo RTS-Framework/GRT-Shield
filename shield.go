@@ -48,7 +48,7 @@ func (gen *Generator) buildShield(src string) (output string, err error) {
 	tpl, err := template.New("shield").Funcs(template.FuncMap{
 		"db":  toDB,
 		"hex": toHex,
-		"igi": gen.insertGarbageInst,
+		"iji": gen.insertJunkInst,
 	}).Parse(shield)
 	if err != nil {
 		return "", fmt.Errorf("invalid shield template: %s", err)

@@ -165,14 +165,26 @@ func (gen *Generator) buildJunkCode(src string) (string, error) {
 	Less64 := make(map[string]int)
 	for i := 'A'; i <= 'Z'; i++ {
 		b := gen.rand.Intn(2) == 0
-		switches[string(i)] = b
+		i8 := int8(gen.rand.Int31() % 128)
+		i16 := int16(gen.rand.Int31() % 32768)
+		i32 := gen.rand.Int31()
+		i64 := gen.rand.Int63()
+		l32 := gen.rand.Intn(32)
+		l64 := gen.rand.Intn(64)
+		switches[string(i+0x00)] = b
 		switches[string(i+0x20)] = b
-		BYTE[string(i)] = int8(gen.rand.Int31() % 128)
-		WORD[string(i)] = int16(gen.rand.Int31() % 32768)
-		DWORD[string(i)] = gen.rand.Int31()
-		QWORD[string(i)] = gen.rand.Int63()
-		Less32[string(i)] = gen.rand.Intn(32)
-		Less64[string(i)] = gen.rand.Intn(64)
+		BYTE[string(i+0x00)] = i8
+		BYTE[string(i+0x20)] = i8
+		WORD[string(i+0x00)] = i16
+		WORD[string(i+0x20)] = i16
+		DWORD[string(i+0x00)] = i32
+		DWORD[string(i+0x20)] = i32
+		QWORD[string(i+0x00)] = i64
+		QWORD[string(i+0x20)] = i64
+		Less32[string(i+0x00)] = l32
+		Less32[string(i+0x20)] = l32
+		Less64[string(i+0x00)] = l64
+		Less64[string(i+0x20)] = l64
 	}
 	ctx := junkCodeCtx{
 		Reg:    gen.buildRandomRegisterMap(),

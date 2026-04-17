@@ -24,106 +24,106 @@
 
 entry:
   // check argument is valid
-  mov {{.RegV.ecx}}, [esp+4]                   {{igi}}
-  test {{.RegV.ecx}}, {{.RegV.ecx}}            {{igi}}
-  jnz next                                     {{igi}}
-  ret 4                                        {{igi}}
+  mov {{.RegV.ecx}}, [esp+4]                   {{iji}}
+  test {{.RegV.ecx}}, {{.RegV.ecx}}            {{iji}}
+  jnz next                                     {{iji}}
+  ret 4                                        {{iji}}
  next:
 
   // save context
-  push {{.RegN.ebp}}                           {{igi}} // for save structure pointer
-  push {{.RegN.ebx}}                           {{igi}} // for save crypto key
-  push {{.RegN.esi}}                           {{igi}} // for save the memory page old protect
+  push {{.RegN.ebp}}                           {{iji}} // for save structure pointer
+  push {{.RegN.ebx}}                           {{iji}} // for save crypto key
+  push {{.RegN.esi}}                           {{iji}} // for save the memory page old protect
 
   // save fields to non-volatile registers
-  mov {{.RegN.ebp}}, [esp + 4*4]               {{igi}} // save structure pointer
-  mov {{.RegN.ebx}}, [{{.RegN.ebp}} + 6*4]     {{igi}} // save crypto key
+  mov {{.RegN.ebp}}, [esp + 4*4]               {{iji}} // save structure pointer
+  mov {{.RegN.ebx}}, [{{.RegN.ebp}} + 6*4]     {{iji}} // save crypto key
 
   // destroy CryptoKey in the stack
-  xor {{.RegV.edx}}, {{.RegV.edx}}             {{igi}}
-  mov [{{.RegN.ebp}} + 6*4], {{.RegV.edx}}     {{igi}}
+  xor {{.RegV.edx}}, {{.RegV.edx}}             {{iji}}
+  mov [{{.RegN.ebp}} + 6*4], {{.RegV.edx}}     {{iji}}
 
   // encrypt return address
-  mov {{.RegV.ecx}}, [esp + 3*4]               {{igi}}
-  xor {{.RegV.ecx}}, {{.RegN.ebx}}             {{igi}}
-  mov [esp + 3*4], {{.RegV.ecx}}               {{igi}}
+  mov {{.RegV.ecx}}, [esp + 3*4]               {{iji}}
+  xor {{.RegV.ecx}}, {{.RegN.ebx}}             {{iji}}
+  mov [esp + 3*4], {{.RegV.ecx}}               {{iji}}
 
   // encrypt the critical memory
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{igi}} // get critical address
-  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{igi}} // set the critical size
-  call xor_buf                                 {{igi}}
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get critical address
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set the critical size
+  call xor_buf                                 {{iji}}
 
   // adjust the page protect to PAGE_READWRITE
-  push 0x04                                    {{igi}}
-  call protect                                 {{igi}}
+  push 0x04                                    {{iji}}
+  call protect                                 {{iji}}
 
   // prepare argument before encrypt stack
-  xor {{.RegV.eax}}, {{.RegV.eax}}             {{igi}} // clear register
-  dec {{.RegV.eax}}                            {{igi}} // calcualte 0xFFFFFFFF
-  mov {{.RegV.edx}}, {{.RegV.eax}}             {{igi}} // set INFINITE
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 5*4]     {{igi}} // set handle of hTimer
-  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 1*4]     {{igi}} // get address of WaitForSingleObject
+  xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register
+  dec {{.RegV.eax}}                            {{iji}} // calcualte 0xFFFFFFFF
+  mov {{.RegV.edx}}, {{.RegV.eax}}             {{iji}} // set INFINITE
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 5*4]     {{iji}} // set handle of hTimer
+  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 1*4]     {{iji}} // get address of WaitForSingleObject
 
   // save argument about WaitForSingleObject
-  push {{.RegV.edx}}                           {{igi}}
-  push {{.RegV.ecx}}                           {{igi}}
-  push {{.RegV.eax}}                           {{igi}}
+  push {{.RegV.edx}}                           {{iji}}
+  push {{.RegV.ecx}}                           {{iji}}
+  push {{.RegV.eax}}                           {{iji}}
 
   // encrypt argument structure
-  mov {{.RegV.ecx}}, {{.RegN.ebp}}             {{igi}} // get structure pointer
-  mov {{.RegV.edx}}, 7*4                       {{igi}} // set the buffer size
-  call xor_buf                                 {{igi}}
+  mov {{.RegV.ecx}}, {{.RegN.ebp}}             {{iji}} // get structure pointer
+  mov {{.RegV.edx}}, 7*4                       {{iji}} // set the buffer size
+  call xor_buf                                 {{iji}}
 
   // Sleep with WaitForSingleObject
-  pop {{.RegV.eax}}                            {{igi}} // get WaitForSingleObject address
-  call {{.RegV.eax}}                           {{igi}} // call WaitForSingleObject
+  pop {{.RegV.eax}}                            {{iji}} // get WaitForSingleObject address
+  call {{.RegV.eax}}                           {{iji}} // call WaitForSingleObject
 
   // decrypt argument structure
-  mov {{.RegV.ecx}}, {{.RegN.ebp}}             {{igi}} // get structure pointer
-  mov {{.RegV.edx}}, 7*4                       {{igi}} // set the buffer size
-  call xor_buf                                 {{igi}}
+  mov {{.RegV.ecx}}, {{.RegN.ebp}}             {{iji}} // get structure pointer
+  mov {{.RegV.edx}}, 7*4                       {{iji}} // set the buffer size
+  call xor_buf                                 {{iji}}
 
   // recover the page protect to old protect
-  push {{.RegN.esi}}                           {{igi}}
-  call protect                                 {{igi}}
+  push {{.RegN.esi}}                           {{iji}}
+  call protect                                 {{iji}}
 
   // decrypt the critical memory
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{igi}} // get critical address
-  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{igi}} // set the critical size
-  call xor_buf                                 {{igi}}
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get critical address
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set the critical size
+  call xor_buf                                 {{iji}}
 
   // decrypt return address
-  mov {{.RegV.ecx}}, [esp + 3*4]               {{igi}}
-  xor {{.RegV.ecx}}, {{.RegN.ebx}}             {{igi}}
-  mov [esp + 3*4], {{.RegV.ecx}}               {{igi}}
+  mov {{.RegV.ecx}}, [esp + 3*4]               {{iji}}
+  xor {{.RegV.ecx}}, {{.RegN.ebx}}             {{iji}}
+  mov [esp + 3*4], {{.RegV.ecx}}               {{iji}}
 
   // restore context
-  pop {{.RegN.esi}}                            {{igi}}
-  pop {{.RegN.ebx}}                            {{igi}}
-  pop {{.RegN.ebp}}                            {{igi}}
-  ret 4                                        {{igi}}
+  pop {{.RegN.esi}}                            {{iji}}
+  pop {{.RegN.ebx}}                            {{iji}}
+  pop {{.RegN.ebp}}                            {{iji}}
+  ret 4                                        {{iji}}
 
 xor_buf:
-  shr {{.RegV.edx}}, 2                         {{igi}} // calculate the loop count
+  shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
  loop_xor:
-  xor [{{.RegV.ecx}}], {{.RegN.ebp}}           {{igi}} // encrypt data with structure pointer
-  xor [{{.RegV.ecx}}], {{.RegN.ebx}}           {{igi}} // encrypt data with crypto key
-  add {{.RegV.ecx}}, 4                         {{igi}} // add data address
-  dec {{.RegV.edx}}                            {{igi}} // update loop count
-  jnz loop_xor                                 {{igi}} // check need decrypt again
-  ret                                          {{igi}}
+  xor [{{.RegV.ecx}}], {{.RegN.ebp}}           {{iji}} // encrypt data with structure pointer
+  xor [{{.RegV.ecx}}], {{.RegN.ebx}}           {{iji}} // encrypt data with crypto key
+  add {{.RegV.ecx}}, 4                         {{iji}} // add data address
+  dec {{.RegV.edx}}                            {{iji}} // update loop count
+  jnz loop_xor                                 {{iji}} // check need decrypt again
+  ret                                          {{iji}}
 
 protect:
-  mov {{.RegV.eax}}, [esp+4]                   {{igi}} // read argument about new protect
-  sub esp, 0x04                                {{igi}} // for save old protect
-  push esp                                     {{igi}} // lpflOldProtect
-  push {{.RegV.eax}}                           {{igi}} // new protect
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 3*4]     {{igi}} // set size of critical
-  push {{.RegV.ecx}}                           {{igi}} // push size
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{igi}} // set address of critical
-  push {{.RegV.ecx}}                           {{igi}} // push address
-  mov {{.RegV.eax}}, [{{.RegN.ebp}}]           {{igi}} // get address of VirtualProtect
-  call {{.RegV.eax}}                           {{igi}} // call VirtualProtect
-  mov {{.RegN.esi}}, [esp]                     {{igi}} // save old protect
-  add esp, 0x04                                {{igi}} // restore stack for old protect
-  ret 4                                        {{igi}} // return and release stack
+  mov {{.RegV.eax}}, [esp+4]                   {{iji}} // read argument about new protect
+  sub esp, 0x04                                {{iji}} // for save old protect
+  push esp                                     {{iji}} // lpflOldProtect
+  push {{.RegV.eax}}                           {{iji}} // new protect
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set size of critical
+  push {{.RegV.ecx}}                           {{iji}} // push size
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // set address of critical
+  push {{.RegV.ecx}}                           {{iji}} // push address
+  mov {{.RegV.eax}}, [{{.RegN.ebp}}]           {{iji}} // get address of VirtualProtect
+  call {{.RegV.eax}}                           {{iji}} // call VirtualProtect
+  mov {{.RegN.esi}}, [esp]                     {{iji}} // save old protect
+  add esp, 0x04                                {{iji}} // restore stack for old protect
+  ret 4                                        {{iji}} // return and release stack

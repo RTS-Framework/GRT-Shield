@@ -23,8 +23,8 @@ var (
 
 func init() {
 	flag.IntVar(&arch, "arch", 0, "specify the target architecture")
-	flag.BoolVar(&opts.NoGarbage, "ngi", false, "not append garbage instruction to shield")
-	flag.Int64Var(&opts.RandSeed, "seed", 0, "specify a random seed for generate loader")
+	flag.BoolVar(&opts.NoJunkCode, "njc", false, "not insert junk instruction to shield")
+	flag.Int64Var(&opts.RandSeed, "seed", 0, "specify a random seed for generate shield")
 	flag.StringVar(&opts.ShieldX86, "sid-x86", "", "specify the x86 shield template file path")
 	flag.StringVar(&opts.ShieldX64, "sid-x64", "", "specify the x64 shield template file path")
 	flag.StringVar(&jcx86, "junk-x86", "", "specify the x86 junk template directory path")

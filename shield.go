@@ -25,21 +25,19 @@ type shieldCtx struct {
 	RegN map[string]string
 }
 
-func (gen *Generator) buildShield(src string) (output string, err error) {
+func (gen *Generator) buildShield(shield string) (output string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New(fmt.Sprint(r))
 		}
 	}()
-	var shield string
-	switch gen.arch {
-	case 32:
-		shield = gen.getShieldX86()
-	case 64:
-		shield = gen.getShieldX64()
-	}
-	if src != "" {
-		shield = src
+	if shield == "" {
+		switch gen.arch {
+		case 32:
+			shield = gen.getShieldX86()
+		case 64:
+			shield = gen.getShieldX64()
+		}
 	}
 	ctx := &shieldCtx{
 		RegV: gen.buildVolatileRegisterMap(),

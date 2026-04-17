@@ -14,8 +14,8 @@ func TestShield(t *testing.T) {
 	generator := NewGenerator()
 
 	opts := &Options{
-		NoGarbage: true,
-		RandSeed:  1234,
+		NoJunkCode: true,
+		RandSeed:   1234,
 	}
 
 	t.Run("x86", func(t *testing.T) {

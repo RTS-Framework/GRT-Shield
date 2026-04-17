@@ -14,7 +14,7 @@ func InspectShieldTemplate(arch int, src string) (string, []byte, error) {
 	generator := NewGenerator()
 	generator.arch = arch
 	generator.opts = &Options{
-		NoGarbage: true,
+		NoJunkCode: true,
 	}
 	defer func() { _ = generator.Close() }()
 	err := generator.initAssembler()

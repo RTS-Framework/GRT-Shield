@@ -34,8 +34,8 @@ type Generator struct {
 
 // Options contains options about generate shield.
 type Options struct {
-	// disable garbage instruction, not recommend.
-	NoGarbage bool `toml:"no_garbage" json:"no_garbage"`
+	// disable insert junk instruction, it is not recommend.
+	NoJunkCode bool `toml:"no_junk_code" json:"no_junk_code"`
 
 	// specify a random seed for generator.
 	RandSeed int64 `toml:"rand_seed" json:"rand_seed"`

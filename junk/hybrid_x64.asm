@@ -8,14 +8,14 @@ entry:
   mov {{.Reg.rax}}, {{.Reg.rbx}}
   test {{.Reg.rax}}, {{.Reg.rax}}
   jnz next_1
-  {{igi}}
+  {{iji}}
  next_1:
   call func_1
   {{end}}
 
   {{if .Switch.B}}
   xor {{.Reg.rax}}, {{.Reg.rcx}}
-  {{igi}}
+  {{iji}}
   jmp leave
   {{end}}
 
@@ -28,10 +28,10 @@ entry:
   mov {{.Reg.rax}}, {{.WORD.E}}
   test {{.Reg.rax}}, {{.Reg.rax}}
   jnz next_3
-  {{igi}}
+  {{iji}}
  next_3:
   {{if .Switch.E}}
-  {{igi}}
+  {{iji}}
   {{end}}
   jmp leave
   {{end}}
@@ -49,7 +49,7 @@ entry:
   jmp exit
 
 func_1:
-  {{igi}}
+  {{iji}}
   ret
 
 func_2:
@@ -58,7 +58,7 @@ func_2:
   {{if .Switch.G}}
     test {{.Reg.rbx}}, {{.Reg.rbx}}
     jnz next_2
-    {{igi}}
+    {{iji}}
    next_2:
     call func_1
   {{end}}
@@ -68,7 +68,7 @@ func_2:
 func_3:
   rol {{.Reg.rax}}, {{.Less32.C}}
   {{if .Switch.H}}
-  {{igi}}
+  {{iji}}
   {{end}}
   ret
 

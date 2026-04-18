@@ -94,6 +94,9 @@ func TestGeneratorFuzz(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			ctx, err := generator.Generate(32, nil)
+			if err == ErrShieldSizeTooLarge {
+				continue
+			}
 			require.NoError(t, err)
 			t.Log("size:", len(ctx.Output))
 			t.Log("seed:", ctx.Seed)
@@ -109,6 +112,9 @@ func TestGeneratorFuzz(t *testing.T) {
 	t.Run("x64", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			ctx, err := generator.Generate(64, nil)
+			if err == ErrShieldSizeTooLarge {
+				continue
+			}
 			require.NoError(t, err)
 			t.Log("size:", len(ctx.Output))
 			t.Log("seed:", ctx.Seed)

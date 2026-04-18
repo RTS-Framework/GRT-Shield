@@ -110,12 +110,10 @@ func (gen *Generator) junkMultiByteNOP() []byte {
 }
 
 func (gen *Generator) junkJumpShort() []byte {
-	numInt3 := 1 + gen.rand.Intn(4)
-	numZero := 0 + gen.rand.Intn(4)
-	jmp := make([]byte, 0, 16)
-	jmp = append(jmp, 0xEB, byte(numInt3+numZero*2)) // #nosec G115
+	numInt3 := 1 + gen.rand.Intn(8)
+	jmp := make([]byte, 0, 10)
+	jmp = append(jmp, 0xEB, byte(numInt3)) // #nosec G115
 	jmp = append(jmp, bytes.Repeat([]byte{0xCC}, numInt3)...)
-	jmp = append(jmp, bytes.Repeat([]byte{0x00, 0x00}, numZero)...)
 	return jmp
 }
 

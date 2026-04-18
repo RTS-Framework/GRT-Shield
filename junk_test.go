@@ -18,6 +18,7 @@ func TestJunkCode(t *testing.T) {
 		ctx, err := generator.Generate(32, opts)
 		require.NoError(t, err)
 		t.Log("size:", len(ctx.Output))
+		t.Log(ctx.ShieldInst)
 
 		if runtime.GOOS != "windows" || runtime.GOARCH != "386" {
 			return
@@ -30,6 +31,7 @@ func TestJunkCode(t *testing.T) {
 		ctx, err := generator.Generate(64, opts)
 		require.NoError(t, err)
 		t.Log("size:", len(ctx.Output))
+		t.Log(ctx.ShieldInst)
 
 		if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
 			return

@@ -46,8 +46,21 @@ func main() {
 	opts.JunkCodeX64 = loadJunkCodeTemplate(64, jcx64)
 
 	generator := shield.NewGenerator()
-	ctx, err := generator.Generate(arch, &opts)
-	checkError(err)
+	var (
+		ctx *shield.Context
+		err error
+	)
+	for {
+		ctx, err = generator.Generate(arch, &opts)
+		if err != nil {
+			if err == shield.ErrShieldSizeTooLarge {
+				fmt.Println("shield size too large, regenerate it")
+				continue
+			}
+			checkError(err)
+		}
+		break
+	}
 
 	fmt.Println("==============Context===============")
 	fmt.Println("seed:", ctx.Seed)

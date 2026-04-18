@@ -30,11 +30,13 @@ entry:
   jnz next_3
   {{iji}}
  next_3:
+  {{if .Switch.E}}
   {{iji}}
+  {{end}}
   jmp leave
   {{end}}
 
-  {{if .Switch.E}}
+  {{if .Switch.F}}
   ror {{.Reg.eax}}, {{.Less32.A}}
   xor {{.Reg.eax}}, {{.Reg.edi}}
   rol {{.Reg.eax}}, {{.Less32.B}}
@@ -53,7 +55,7 @@ func_1:
 func_2:
   push {{.Reg.ebx}}
   mov {{.Reg.ebx}}, {{.Reg.ecx}}
-  {{if .Switch.F}}
+  {{if .Switch.G}}
     test {{.Reg.ebx}}, {{.Reg.ebx}}
     jnz next_2
     {{iji}}
@@ -65,7 +67,7 @@ func_2:
 
 func_3:
   rol {{.Reg.eax}}, {{.Less32.C}}
-  {{if .Switch.E}}
+  {{if .Switch.H}}
   {{iji}}
   {{end}}
   ret

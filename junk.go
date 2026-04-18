@@ -86,11 +86,13 @@ func (gen *Generator) buildJunkInst() []byte {
 		numJunkCodes = len(gen.getJunkCodeX64())
 	}
 	// dynamically adjust probability
-	switch gen.rand.Intn(2 + numJunkCodes) {
+	switch gen.rand.Intn(3 + numJunkCodes) {
 	case 0:
 		return nil
 	case 1:
 		return gen.junkMultiByteNOP()
+	case 2:
+		return gen.junkJumpShort()
 	default:
 		return gen.junkTemplate()
 	}
@@ -105,6 +107,16 @@ func (gen *Generator) junkMultiByteNOP() []byte {
 		nop = []byte{0x66, 0x90}
 	}
 	return nop
+}
+
+func (gen *Generator) junkJumpShort() []byte {
+	numInt3 := 1 + gen.rand.Intn(4)
+	numZero := 0 + gen.rand.Intn(4)
+	jmp := make([]byte, 0, 16)
+	jmp = append(jmp, 0xEB, byte(numInt3+numZero*2)) // #nosec G115
+	jmp = append(jmp, bytes.Repeat([]byte{0xCC}, numInt3)...)
+	jmp = append(jmp, bytes.Repeat([]byte{0x00, 0x00}, numZero)...)
+	return jmp
 }
 
 func (gen *Generator) junkTemplate() []byte {

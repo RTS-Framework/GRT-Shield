@@ -13,13 +13,13 @@
 
 // steps:
 //   encrypt return address
+//   adjust the critical memory page protect
 //   encrypt the critical instructions
-//   adjust the memory page protect
 //   encrypt stack about structure
 //   call WaitForSingleObject
 //   decrypt stack about structure
-//   restore the memory page protect
 //   decrypt the critical instructions
+//   restore the critical memory page protect
 //   decrypt return address
 
 entry:
@@ -52,14 +52,14 @@ entry:
   xor {{.RegV.ecx}}, {{.RegN.ebx}}             {{iji}}
   mov [esp + 3*4], {{.RegV.ecx}}               {{iji}}
 
+  // adjust the page protect to PAGE_READWRITE
+  push 0x04                                    {{iji}}
+  call protect                                 {{iji}}
+
   // encrypt the critical memory
   mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get critical address
   mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set the critical size
   call xor_buf                                 {{iji}}
-
-  // adjust the page protect to PAGE_READWRITE
-  push 0x04                                    {{iji}}
-  call protect                                 {{iji}}
 
   // prepare argument before encrypt stack
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register
@@ -87,14 +87,14 @@ entry:
   mov {{.RegV.edx}}, 7*4                       {{iji}} // set the buffer size
   call xor_buf                                 {{iji}}
 
-  // recover the page protect to old protect
-  push {{.RegN.esi}}                           {{iji}}
-  call protect                                 {{iji}}
-
   // decrypt the critical memory
   mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get critical address
   mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set the critical size
   call xor_buf                                 {{iji}}
+
+  // recover the page protect to old protect
+  push {{.RegN.esi}}                           {{iji}}
+  call protect                                 {{iji}}
 
   // decrypt return address
   mov {{.RegV.ecx}}, [esp + 3*4]               {{iji}}

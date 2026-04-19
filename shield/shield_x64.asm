@@ -13,13 +13,13 @@
 
 // steps:
 //   encrypt return address
+//   adjust the critical memory page protect
 //   encrypt the critical instructions
-//   adjust the memory page protect
 //   encrypt stack about structure
 //   call WaitForSingleObject
 //   decrypt stack about structure
-//   restore the memory page protect
 //   decrypt the critical instructions
+//   restore the critical memory page protect
 //   decrypt return address
 
 entry:
@@ -51,14 +51,14 @@ entry:
   xor {{.RegV.rcx}}, {{.RegN.rbx}}             {{iji}}
   mov [rsp + 3*8], {{.RegV.rcx}}               {{iji}}
 
+  // adjust the page protect to PAGE_READWRITE
+  mov r8, 0x04                                 {{iji}}
+  call protect                                 {{iji}}
+
   // encrypt the critical memory
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get critical address
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set the critical size
   call xor_buf                                 {{iji}}
-
-  // adjust the page protect to PAGE_READWRITE
-  mov r8, 0x04                                 {{iji}}
-  call protect                                 {{iji}}
 
   // prepare argument before encrypt stack
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register
@@ -92,14 +92,14 @@ entry:
   mov {{.RegV.rdx}}, 7*8                       {{iji}} // set the buffer size
   call xor_buf                                 {{iji}}
 
-  // recover the page protect to old protect
-  mov r8, {{.RegN.rsi}}                        {{iji}}
-  call protect                                 {{iji}}
-
   // decrypt the critical memory
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get critical address
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set the critical size
   call xor_buf                                 {{iji}}
+
+  // recover the page protect to old protect
+  mov r8, {{.RegN.rsi}}                        {{iji}}
+  call protect                                 {{iji}}
 
   // decrypt return address
   mov {{.RegV.rcx}}, [rsp + 3*8]               {{iji}}

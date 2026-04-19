@@ -39,6 +39,10 @@ entry:
   mov {{.RegN.ebp}}, [esp + 4*4]               {{iji}} // save structure pointer
   mov {{.RegN.ebx}}, [{{.RegN.ebp}} + 6*4]     {{iji}} // save crypto key
 
+  // prevent the fixed crypto key
+  add {{.RegN.ebx}}, [{{.RegN.ebp}} + 2*4]     {{iji}}
+  xor {{.RegN.ebx}}, ecx                       {{iji}}
+
   // destroy CryptoKey in the stack
   xor {{.RegV.edx}}, {{.RegV.edx}}             {{iji}}
   mov [{{.RegN.ebp}} + 6*4], {{.RegV.edx}}     {{iji}}
@@ -106,7 +110,6 @@ entry:
 xor_buf:
   shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
  loop_xor:
-  xor [{{.RegV.ecx}}], {{.RegN.ebp}}           {{iji}} // encrypt data with structure pointer
   xor [{{.RegV.ecx}}], {{.RegN.ebx}}           {{iji}} // encrypt data with crypto key
   add {{.RegV.ecx}}, 4                         {{iji}} // add data address
   dec {{.RegV.edx}}                            {{iji}} // update loop count

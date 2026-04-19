@@ -50,7 +50,7 @@ func main() {
 		ctx *shield.Context
 		err error
 	)
-	for {
+	for i := 0; i < 10; i++ {
 		ctx, err = generator.Generate(arch, &opts)
 		if err != nil {
 			if err == shield.ErrShieldSizeTooLarge {
@@ -60,6 +60,10 @@ func main() {
 			checkError(err)
 		}
 		break
+	}
+	if ctx == nil {
+		fmt.Println("regenerate shield too many times, please check template")
+		os.Exit(1)
 	}
 
 	fmt.Println("==============Context===============")

@@ -59,7 +59,7 @@ entry:
 
   // prepare argument before encrypt stack
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register
-  dec {{.RegV.eax}}                            {{iji}} // calcualte 0xFFFFFFFF
+  dec {{.RegV.eax}}                            {{iji}} // calculate INFINITE (0xFFFFFFFF)
   mov {{.RegV.edx}}, {{.RegV.eax}}             {{iji}} // set INFINITE
   mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 5*4]     {{iji}} // set handle of hTimer
   mov {{.RegV.eax}}, [{{.RegN.ebp}} + 1*4]     {{iji}} // get address of WaitForSingleObject

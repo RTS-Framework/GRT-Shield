@@ -180,19 +180,20 @@ func (gen *Generator) assemble(src string) ([]byte, error) {
 
 // Close is used to close shield generator.
 func (gen *Generator) Close() error {
+	var err error
 	if gen.ase32 != nil {
-		err := gen.ase32.Close()
-		if err != nil {
-			return err
+		e := gen.ase32.Close()
+		if e != nil {
+			err = e
 		}
 		gen.ase32 = nil
 	}
 	if gen.ase64 != nil {
-		err := gen.ase64.Close()
-		if err != nil {
-			return err
+		e := gen.ase64.Close()
+		if e != nil && err == nil {
+			err = e
 		}
 		gen.ase64 = nil
 	}
-	return nil
+	return err
 }

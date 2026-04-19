@@ -1,7 +1,9 @@
 package shield
 
 import (
+	"crypto/rand"
 	"debug/pe"
+	"encoding/binary"
 	"os"
 	"runtime"
 	"strings"
@@ -65,13 +67,19 @@ func testBuildShieldArgs(t *testing.T, critical []byte, sleep time.Duration) *te
 		hTimer, uintptr(unsafe.Pointer(&dueTime)), 0, 0, 0, 1,
 	)
 	require.True(t, ok == 1, err)
+
+	buf := make([]byte, 4)
+	_, err = rand.Read(buf)
+	require.NoError(t, err)
+	cryptoKey := uintptr(binary.LittleEndian.Uint32(buf))
+
 	args := &testShieldArgs{
 		VirtualProtect:      procVirtualProtect.Addr(),
 		WaitForSingleObject: procWaitForSingleObject.Addr(),
 		CriticalAddress:     uintptr(unsafe.Pointer(&critical[0])),
 		CriticalSize:        uintptr(len(critical)),
 		TimerHandle:         hTimer,
-		CryptoKey:           0x12345678,
+		CryptoKey:           cryptoKey,
 	}
 	return args
 }

@@ -87,7 +87,7 @@ func TestSpecificSeed(t *testing.T) {
 }
 
 func TestGeneratorFuzz(t *testing.T) {
-	const sleepTime = 30 * time.Millisecond
+	const sleepTime = 50 * time.Millisecond
 
 	generator := NewGenerator()
 

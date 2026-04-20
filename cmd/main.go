@@ -66,11 +66,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	fmt.Println("============Instruction=============")
+	fmt.Println(ctx.ShieldInst)
 	fmt.Println("==============Context===============")
 	fmt.Println("seed:", ctx.Seed)
 	fmt.Println("size:", len(ctx.Output))
-	fmt.Println("====================================")
-	fmt.Println(ctx.ShieldInst)
 	fmt.Println("====================================")
 	fmt.Println()
 

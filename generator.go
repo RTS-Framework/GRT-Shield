@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/For-ACGN/go-keystone"
@@ -30,6 +31,8 @@ type Generator struct {
 	// context arguments
 	arch int
 	opts *Options
+
+	mu sync.Mutex
 }
 
 // Options contains options about generate shield.
@@ -84,6 +87,7 @@ func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error
 			err = errors.New(fmt.Sprint(r))
 		}
 	}()
+	// process arguments
 	switch arch {
 	case 32, 64:
 	default:
@@ -92,6 +96,9 @@ func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error
 	if opts == nil {
 		opts = new(Options)
 	}
+	gen.mu.Lock()
+	defer gen.mu.Unlock()
+	// store context arguments
 	gen.arch = arch
 	gen.opts = opts
 	// initialize keystone engine
@@ -180,6 +187,8 @@ func (gen *Generator) assemble(src string) ([]byte, error) {
 
 // Close is used to close shield generator.
 func (gen *Generator) Close() error {
+	gen.mu.Lock()
+	defer gen.mu.Unlock()
 	var err error
 	if gen.ase32 != nil {
 		e := gen.ase32.Close()

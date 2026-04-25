@@ -39,8 +39,11 @@ entry:
   mov {{.RegN.rbx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // save crypto key
 
   // prevent the fixed crypto key
-  add {{.RegN.rbx}}, [{{.RegN.rbp}} + 2*8]     {{iji}}
+  ror {{.RegN.rbx}}, 7                         {{iji}}
   xor {{.RegN.rbx}}, rcx                       {{iji}}
+  rol {{.RegN.rbx}}, 13                        {{iji}}
+  add {{.RegN.rbx}}, [{{.RegN.rbp}} + 2*8]     {{iji}}
+  ror {{.RegN.rbx}}, 4                         {{iji}}
 
   // destroy CryptoKey in the stack
   xor {{.RegV.rdx}}, {{.RegV.rdx}}             {{iji}}

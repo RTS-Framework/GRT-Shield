@@ -41,7 +41,7 @@ entry:
 
   // prevent the fixed crypto key
   add {{.RegN.ebx}}, [{{.RegN.ebp}} + 2*4]     {{iji}}
-  xor {{.RegN.ebx}}, ecx                       {{iji}}
+  xor {{.RegN.ebx}}, {{.RegN.ebp}}             {{iji}}
 
   // destroy CryptoKey in the stack
   xor {{.RegV.edx}}, {{.RegV.edx}}             {{iji}}

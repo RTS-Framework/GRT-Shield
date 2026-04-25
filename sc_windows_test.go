@@ -68,10 +68,10 @@ func testBuildShieldArgs(t *testing.T, critical []byte, sleep time.Duration) *te
 	)
 	require.True(t, ok == 1, err)
 
-	buf := make([]byte, 4)
+	buf := make([]byte, 8)
 	_, err = rand.Read(buf)
 	require.NoError(t, err)
-	cryptoKey := uintptr(binary.LittleEndian.Uint32(buf))
+	cryptoKey := uintptr(binary.LittleEndian.Uint64(buf))
 
 	args := &testShieldArgs{
 		VirtualProtect:      procVirtualProtect.Addr(),

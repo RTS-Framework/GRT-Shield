@@ -109,7 +109,13 @@ func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error
 	// set random seed
 	seed := opts.RandSeed
 	if seed == 0 {
-		seed = gen.rand.Int63()
+		buf := make([]byte, 8)
+		_, err = cr.Read(buf)
+		if err == nil {
+			seed = int64(binary.LittleEndian.Uint64(buf)) // #nosec G115
+		} else {
+			seed = gen.rand.Int63()
+		}
 	}
 	gen.rand.Seed(seed)
 	// build shield source from template

@@ -29,7 +29,7 @@ entry:
   ret                                          {{iji}}
  next:
 
-  // save context
+  // save context and ensure stack is 16 bytes alignd
   push {{.RegN.rbp}}                           {{iji}} // for save structure pointer
   push {{.RegN.rbx}}                           {{iji}} // for save crypto key
   push {{.RegN.rsi}}                           {{iji}} // for save the memory page old protect

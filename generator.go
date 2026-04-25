@@ -117,6 +117,10 @@ func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error
 			seed = gen.rand.Int63()
 		}
 	}
+	// forced zeroing of the sign bit
+	if seed < 0 {
+		seed = seed & 0x7FFFFFFFFFFFFFFF
+	}
 	gen.rand.Seed(seed)
 	// build shield source from template
 	shield, err := gen.buildShield("")

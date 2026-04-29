@@ -55,9 +55,15 @@ entry:
   xor {{.RegV.ecx}}, {{.RegN.ebx}}             {{iji}}
   mov [esp + 3*4], {{.RegV.ecx}}               {{iji}}
 
+  // encrypt address of WaitForSingleObject
+  xor [{{.RegN.ebp}} + 1*4], {{.RegN.ebx}}     {{iji}}
+
   // adjust the page protect to PAGE_READWRITE
   push 0x04                                    {{iji}}
   call protect                                 {{iji}}
+
+  // decrypt address of WaitForSingleObject
+  xor [{{.RegN.ebp}} + 1*4], {{.RegN.ebx}}     {{iji}}
 
   // encrypt the critical memory
   mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get critical address
@@ -129,7 +135,9 @@ protect:
   mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // set address of critical
   push {{.RegV.ecx}}                           {{iji}} // push address
   mov {{.RegV.eax}}, [{{.RegN.ebp}}]           {{iji}} // get address of VirtualProtect
+  xor [{{.RegN.ebp}}], {{.RegN.ebx}}           {{iji}} // encrypt address of VirtualProtect
   call {{.RegV.eax}}                           {{iji}} // call VirtualProtect
   mov {{.RegN.esi}}, [esp]                     {{iji}} // save old protect
+  xor [{{.RegN.ebp}}], {{.RegN.ebx}}           {{iji}} // decrypt address of VirtualProtect
   add esp, 0x04                                {{iji}} // restore stack for old protect
   ret 4                                        {{iji}} // return and release stack

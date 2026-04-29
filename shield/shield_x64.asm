@@ -54,9 +54,15 @@ entry:
   xor {{.RegV.rcx}}, {{.RegN.rbx}}             {{iji}}
   mov [rsp + 3*8], {{.RegV.rcx}}               {{iji}}
 
+  // encrypt address of WaitForSingleObject
+  xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}}
+
   // adjust the page protect to PAGE_READWRITE
   mov r8, 0x04                                 {{iji}}
   call protect                                 {{iji}}
+
+  // decrypt address of WaitForSingleObject
+  xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}}
 
   // encrypt the critical memory
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get critical address
@@ -127,6 +133,7 @@ xor_buf:
 protect:
   sub rsp, 0x08                                {{iji}} // for save old protect
   mov rax, [{{.RegN.rbp}}]                     {{iji}} // get address of VirtualProtect
+  xor [{{.RegN.rbp}}], {{.RegN.rbx}}           {{iji}} // encrypt address of VirtualProtect
   mov rcx, [{{.RegN.rbp}} + 2*8]               {{iji}} // set address of critical
   mov rdx, [{{.RegN.rbp}} + 3*8]               {{iji}} // set size of critical
   mov r9,  rsp                                 {{iji}} // lpflOldProtect
@@ -134,5 +141,6 @@ protect:
   call rax                                     {{iji}} // call VirtualProtect
   add rsp, 0x20                                {{iji}} // restore stack for call convention
   mov {{.RegN.rsi}}, [rsp]                     {{iji}} // save old protect
+  xor [{{.RegN.rbp}}], {{.RegN.rbx}}           {{iji}} // decrypt address of VirtualProtect
   add rsp, 0x08                                {{iji}} // restore stack for old protect
   ret                                          {{iji}}

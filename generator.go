@@ -2,10 +2,13 @@ package shield
 
 import (
 	cr "crypto/rand"
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"math/rand"
+	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -66,14 +69,25 @@ type Context struct {
 
 // NewGenerator is used to create a shield generator.
 func NewGenerator() *Generator {
-	var seed int64
 	buf := make([]byte, 8)
 	_, err := cr.Read(buf)
-	if err == nil {
-		seed = int64(binary.LittleEndian.Uint64(buf)) // #nosec G115
-	} else {
-		seed = time.Now().UnixNano()
+	if err != nil {
+		hash := sha256.New()
+		binary.BigEndian.PutUint64(buf, uint64(time.Now().UnixNano()))
+		hash.Write(buf)
+		binary.BigEndian.PutUint64(buf, uint64(os.Getpid())) // #nosec G115
+		hash.Write(buf)
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+		binary.BigEndian.PutUint64(buf, m.HeapAlloc)
+		hash.Write(buf)
+		binary.BigEndian.PutUint64(buf, m.NextGC)
+		hash.Write(buf)
+		binary.BigEndian.PutUint64(buf, uint64(m.NumGC))
+		hash.Write(buf)
+		buf = hash.Sum(nil)[:8]
 	}
+	seed := int64(binary.LittleEndian.Uint64(buf)) // #nosec G115
 	generator := Generator{
 		rand: rand.New(rand.NewSource(seed)), // #nosec
 	}

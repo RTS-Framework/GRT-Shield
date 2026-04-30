@@ -15,12 +15,13 @@
 
 // steps:
 //   encrypt return address
+//   encrypt critical instructions to shelter
 //   adjust the critical memory page protect
-//   encrypt the critical instructions
+//   clean the critical instructions
 //   encrypt stack about structure
 //   call WaitForSingleObject
 //   decrypt stack about structure
-//   decrypt the critical instructions
+//   recover the critical instructions from shelter
 //   restore the critical memory page protect
 //   decrypt return address
 
@@ -56,6 +57,12 @@ entry:
   xor {{.RegV.rcx}}, {{.RegN.rbx}}             {{iji}}
   mov [rsp + 3*8], {{.RegV.rcx}}               {{iji}}
 
+  // encrypt the critical memory to shelter
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get critical address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical size
+  mov {{.RegV.r8}},  [{{.RegN.rbp}} + 4*8]     {{iji}} // set shelter address
+  call xor_buf                                 {{iji}}
+
   // encrypt address of WaitForSingleObject
   xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}}
 
@@ -63,13 +70,10 @@ entry:
   mov r8, 0x04                                 {{iji}}
   call protect                                 {{iji}}
 
+  // clean the critical data
+
   // decrypt address of WaitForSingleObject
   xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}}
-
-  // encrypt the critical memory
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get critical address
-  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set the critical size
-  call xor_buf                                 {{iji}}
 
   // prepare argument before encrypt stack
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register
@@ -86,6 +90,7 @@ entry:
   // encrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{iji}} // get structure pointer
   mov {{.RegV.rdx}}, 7*8                       {{iji}} // set the buffer size
+  mov {{.RegV.r8}}, {{.RegN.rbp}}              {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
   // restore argument about WaitForSingleObject
@@ -101,11 +106,13 @@ entry:
   // decrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{iji}} // get structure pointer
   mov {{.RegV.rdx}}, 7*8                       {{iji}} // set the buffer size
+  mov {{.RegV.r8}}, {{.RegN.rbp}}              {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
   // decrypt the critical memory
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get critical address
-  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set the critical size
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set shelter address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set shelter size
+  mov {{.RegV.r8}}, [{{.RegN.rbp}} + 2*8]      {{iji}} // get critical address
   call xor_buf                                 {{iji}}
 
   // recover the page protect to old protect
@@ -126,8 +133,11 @@ entry:
 xor_buf:
   shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count
  loop_xor:
-  xor [{{.RegV.rcx}}], {{.RegN.rbx}}           {{iji}} // encrypt data with crypto key
-  add {{.RegV.rcx}}, 8                         {{iji}} // add data address
+  mov {{.RegV.r9}}, [{{.RegV.rcx}}]            {{iji}} // load data from critical
+  mov [{{.RegV.r8}}], {{.RegV.r9}}             {{iji}} // copy data to shelter
+  xor [{{.RegV.r8}}], {{.RegN.rbx}}            {{iji}} // encrypt data with crypto key
+  add {{.RegV.rcx}}, 8                         {{iji}} // add critical address
+  add {{.RegV.r8}}, 8                          {{iji}} // add shelter address
   dec {{.RegV.rdx}}                            {{iji}} // update loop count
   jnz loop_xor                                 {{iji}} // check need decrypt again
   ret                                          {{iji}}

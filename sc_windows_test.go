@@ -45,16 +45,20 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	t.Logf("data address:   0x%X\n", criticalAddr)
 	t.Logf("shield address: 0x%X\n", address)
 
-	args := testBuildShieldArgs(t, critical, sleep)
 	now := time.Now()
 
+	args := testBuildShieldArgs(t, critical, sleep)
 	_, _, _ = syscall.SyscallN(address, uintptr(unsafe.Pointer(args)))
-
-	require.Greater(t, time.Since(now), sleep)
-	require.True(t, strings.HasPrefix(string(critical), "runtime instruction"))
-
 	err := windows.CloseHandle(windows.Handle(args.TimerHandle))
 	require.NoError(t, err)
+
+	args = testBuildShieldArgs(t, critical, sleep)
+	_, _, _ = syscall.SyscallN(address, uintptr(unsafe.Pointer(args)))
+	err = windows.CloseHandle(windows.Handle(args.TimerHandle))
+	require.NoError(t, err)
+
+	require.Greater(t, time.Since(now), sleep*2)
+	require.True(t, strings.HasPrefix(string(critical), "runtime instruction"))
 }
 
 func testBuildShieldArgs(t *testing.T, critical []byte, sleep time.Duration) *testShieldArgs {

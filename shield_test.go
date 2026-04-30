@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testSleepTime = time.Second
+const testSleepTime = 500 * time.Millisecond
 
 func TestShield(t *testing.T) {
 	generator := NewGenerator()

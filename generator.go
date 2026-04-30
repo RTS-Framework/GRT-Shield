@@ -73,7 +73,7 @@ func NewGenerator() *Generator {
 	_, err := cr.Read(buf)
 	if err != nil {
 		hash := sha256.New()
-		binary.BigEndian.PutUint64(buf, uint64(time.Now().UnixNano()))
+		binary.BigEndian.PutUint64(buf, uint64(time.Now().UnixNano())) // #nosec G115
 		hash.Write(buf)
 		binary.BigEndian.PutUint64(buf, uint64(os.Getpid())) // #nosec G115
 		hash.Write(buf)
@@ -87,9 +87,9 @@ func NewGenerator() *Generator {
 		hash.Write(buf)
 		buf = hash.Sum(nil)[:8]
 	}
-	seed := int64(binary.LittleEndian.Uint64(buf)) // #nosec G115
+	seed := binary.LittleEndian.Uint64(buf)
 	generator := Generator{
-		rand: rand.New(rand.NewSource(seed)), // #nosec
+		rand: rand.New(rand.NewSource(int64(seed))), // #nosec
 	}
 	return &generator
 }

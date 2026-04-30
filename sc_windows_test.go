@@ -63,7 +63,7 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 
 	require.Greater(t, time.Since(now), sleep*2)
 	require.True(t, strings.HasPrefix(string(critical), "runtime instruction"))
-	require.NotZero(t, shelter[0])
+	require.NotZero(t, binary.LittleEndian.Uint64(shelter[:8]))
 }
 
 func testBuildShieldArgs(t *testing.T, critical, shelter []byte, sleep time.Duration) *testShieldArgs {

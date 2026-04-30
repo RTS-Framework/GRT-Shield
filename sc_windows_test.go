@@ -39,29 +39,34 @@ type testShieldArgs struct {
 func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	critical := make([]byte, 8192)
 	copy(critical, "runtime instruction")
-	criticalAddr := uintptr(unsafe.Pointer(&critical[0]))
+	shelter := make([]byte, 16384)
 
-	address := testDeployShield(t, shield)
-	t.Logf("data address:   0x%X\n", criticalAddr)
-	t.Logf("shield address: 0x%X\n", address)
+	shieldAddr := testDeployShield(t, shield)
+	criticalAddr := uintptr(unsafe.Pointer(&critical[0]))
+	shelterAddr := uintptr(unsafe.Pointer(&shelter[0]))
+	t.Logf("shield address:   0x%X\n", shieldAddr)
+	t.Logf("critical address: 0x%X\n", criticalAddr)
+	t.Logf("shelter address:  0x%X\n", shelterAddr)
 
 	now := time.Now()
 
-	args := testBuildShieldArgs(t, critical, sleep)
-	_, _, _ = syscall.SyscallN(address, uintptr(unsafe.Pointer(args)))
+	args := testBuildShieldArgs(t, critical, shelter, sleep)
+	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
 	err := windows.CloseHandle(windows.Handle(args.TimerHandle))
 	require.NoError(t, err)
 
-	args = testBuildShieldArgs(t, critical, sleep)
-	_, _, _ = syscall.SyscallN(address, uintptr(unsafe.Pointer(args)))
+	args = testBuildShieldArgs(t, critical, shelter, sleep)
+	args.VirtualProtect = 0 // not adjust critical page protect
+	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
 	err = windows.CloseHandle(windows.Handle(args.TimerHandle))
 	require.NoError(t, err)
 
 	require.Greater(t, time.Since(now), sleep*2)
 	require.True(t, strings.HasPrefix(string(critical), "runtime instruction"))
+	require.NotZero(t, shelter[0])
 }
 
-func testBuildShieldArgs(t *testing.T, critical []byte, sleep time.Duration) *testShieldArgs {
+func testBuildShieldArgs(t *testing.T, critical, shelter []byte, sleep time.Duration) *testShieldArgs {
 	hTimer, _, err := procCreateWaitableTimerA.Call(0, 0, 0)
 	if hTimer == 0 {
 		require.NoError(t, err)
@@ -82,6 +87,7 @@ func testBuildShieldArgs(t *testing.T, critical []byte, sleep time.Duration) *te
 		WaitForSingleObject: procWaitForSingleObject.Addr(),
 		CriticalAddress:     uintptr(unsafe.Pointer(&critical[0])),
 		CriticalSize:        uintptr(len(critical)),
+		ShelterAddress:      uintptr(unsafe.Pointer(&shelter[0])),
 		TimerHandle:         hTimer,
 		CryptoKey:           cryptoKey,
 	}

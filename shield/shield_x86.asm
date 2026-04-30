@@ -1,6 +1,8 @@
 .code32
 
-// the CriticalSize must be aligned with 4 bytes
+// notice:
+//   if VirtualProtect is zero, skip adjust page protect
+//   the CriticalSize must be 4 bytes aligned
 
 // struct:
 //   [ebp + 0*4]  VirtualProtect
@@ -126,6 +128,12 @@ xor_buf:
   ret                                          {{iji}}
 
 protect:
+  // check VirtualProtect is zero
+  mov {{.RegV.eax}}, [{{.RegN.ebp}}]           {{iji}}
+  test {{.RegV.eax}}, {{.RegV.eax}}            {{iji}}
+  jnz next_vp                                  {{iji}}
+  ret 4                                        {{iji}}
+ next_vp:
   mov {{.RegV.eax}}, [esp+4]                   {{iji}} // read argument about new protect
   sub esp, 0x04                                {{iji}} // for save old protect
   push esp                                     {{iji}} // lpflOldProtect
@@ -138,6 +146,6 @@ protect:
   xor [{{.RegN.ebp}}], {{.RegN.ebx}}           {{iji}} // encrypt address of VirtualProtect
   call {{.RegV.eax}}                           {{iji}} // call VirtualProtect
   mov {{.RegN.esi}}, [esp]                     {{iji}} // save old protect
-  xor [{{.RegN.ebp}}], {{.RegN.ebx}}           {{iji}} // decrypt address of VirtualProtect
   add esp, 0x04                                {{iji}} // restore stack for old protect
+  xor [{{.RegN.ebp}}], {{.RegN.ebx}}           {{iji}} // decrypt address of VirtualProtect
   ret 4                                        {{iji}} // return and release stack

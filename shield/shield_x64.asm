@@ -1,6 +1,8 @@
 .code64
 
-// the CriticalSize must be 8 bytes aligned
+// notice:
+//   if VirtualProtect is zero, skip adjust page protect
+//   the CriticalSize must be 8 bytes aligned
 
 // struct:
 //   [rbp + 0*8]  VirtualProtect
@@ -131,16 +133,25 @@ xor_buf:
   ret                                          {{iji}}
 
 protect:
-  sub rsp, 0x08                                {{iji}} // for save old protect
-  mov rax, [{{.RegN.rbp}}]                     {{iji}} // get address of VirtualProtect
+  // check VirtualProtect is zero
+  mov {{.RegV.rax}}, [{{.RegN.rbp}}]           {{iji}}
+  test {{.RegV.rax}}, {{.RegV.rax}}            {{iji}}
+  jnz next_vp                                  {{iji}}
+  ret                                          {{iji}}
+ next_vp:
+  xor {{.RegV.rax}}, {{.RegV.rax}}             {{iji}} // clear register about VirtualProtect
+  push {{.RegN.rdi}}                           {{iji}} // save non-volatile register
+  mov {{.RegN.rdi}}, [{{.RegN.rbp}}]           {{iji}} // get address of VirtualProtect
   xor [{{.RegN.rbp}}], {{.RegN.rbx}}           {{iji}} // encrypt address of VirtualProtect
   mov rcx, [{{.RegN.rbp}} + 2*8]               {{iji}} // set address of critical
   mov rdx, [{{.RegN.rbp}} + 3*8]               {{iji}} // set size of critical
+  sub rsp, 0x08                                {{iji}} // for save old protect
   mov r9,  rsp                                 {{iji}} // lpflOldProtect
-  sub rsp, 0x20                                {{iji}} // reserve stack for call convention
-  call rax                                     {{iji}} // call VirtualProtect
-  add rsp, 0x20                                {{iji}} // restore stack for call convention
+  sub rsp, 0x28                                {{iji}} // reserve stack for call convention
+  call {{.RegN.rdi}}                           {{iji}} // call VirtualProtect
+  add rsp, 0x28                                {{iji}} // restore stack for call convention
   mov {{.RegN.rsi}}, [rsp]                     {{iji}} // save old protect
-  xor [{{.RegN.rbp}}], {{.RegN.rbx}}           {{iji}} // decrypt address of VirtualProtect
   add rsp, 0x08                                {{iji}} // restore stack for old protect
+  xor [{{.RegN.rbp}}], {{.RegN.rbx}}           {{iji}} // decrypt address of VirtualProtect
+  pop {{.RegN.rdi}}                            {{iji}} // restore non-volatile register
   ret                                          {{iji}}

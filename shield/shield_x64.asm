@@ -25,7 +25,6 @@
 //   restore the critical memory page protect
 //   decrypt return address
 
-// TODO replace r8 to rax
 // TODO // prevent the fixed crypto key
 
 entry:
@@ -63,7 +62,7 @@ entry:
   // encrypt the critical memory to shelter
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // set critical address
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical size
-  mov {{.RegV.r8}},  [{{.RegN.rbp}} + 4*8]     {{iji}} // set shelter address
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set shelter address
   call xor_buf                                 {{iji}}
 
   // encrypt address of WaitForSingleObject
@@ -102,7 +101,7 @@ entry:
   // encrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{iji}} // set structure pointer
   mov {{.RegV.rdx}}, 7*8                       {{iji}} // set the buffer size
-  mov {{.RegV.r8}}, {{.RegN.rbp}}              {{iji}} // padding dst address
+  mov {{.RegV.rax}}, {{.RegN.rbp}}             {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
   // restore argument about WaitForSingleObject
@@ -118,13 +117,13 @@ entry:
   // decrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{iji}} // set structure pointer
   mov {{.RegV.rdx}}, 7*8                       {{iji}} // set the buffer size
-  mov {{.RegV.r8}}, {{.RegN.rbp}}              {{iji}} // padding dst address
+  mov {{.RegV.rax}}, {{.RegN.rbp}}             {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
   // recover the critical memory from shelter
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set shelter address
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set shelter size
-  mov {{.RegV.r8}}, [{{.RegN.rbp}} + 2*8]      {{iji}} // set critical address
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // set critical address
   call xor_buf                                 {{iji}}
 
   // recover the page protect to old protect
@@ -145,11 +144,11 @@ entry:
 xor_buf:
   shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count
  loop_xor:
-  mov {{.RegV.r9}}, [{{.RegV.rcx}}]            {{iji}} // load data from source
-  mov [{{.RegV.r8}}], {{.RegV.r9}}             {{iji}} // copy data to destination
-  xor [{{.RegV.r8}}], {{.RegN.rbx}}            {{iji}} // encrypt data with crypto key
+  mov {{.RegV.r8}}, [{{.RegV.rcx}}]            {{iji}} // load data from source
+  mov [{{.RegV.rax}}], {{.RegV.r8}}            {{iji}} // copy data to destination
+  xor [{{.RegV.rax}}], {{.RegN.rbx}}           {{iji}} // encrypt data with crypto key
   add {{.RegV.rcx}}, 8                         {{iji}} // add source address
-  add {{.RegV.r8}}, 8                          {{iji}} // add destination address
+  add {{.RegV.rax}}, 8                         {{iji}} // add destination address
   dec {{.RegV.rdx}}                            {{iji}} // update loop count
   jnz loop_xor                                 {{iji}} // check need decrypt again
   ret                                          {{iji}}

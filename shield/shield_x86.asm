@@ -74,6 +74,17 @@ entry:
   // decrypt address of WaitForSingleObject
   xor [{{.RegN.ebp}} + 1*4], {{.RegN.ebx}}     {{iji}}
 
+  // erase the critical data
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // set critical address
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set critical size
+  shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
+  xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // calculate zero value
+ loop_erase:
+  mov [{{.RegV.ecx}}], {{.RegV.eax}}           {{iji}} // erase data
+  add {{.RegV.ecx}}, 4                         {{iji}} // add critical address
+  dec {{.RegV.edx}}                            {{iji}} // update loop count
+  jnz loop_erase                               {{iji}} // check need erase next
+
   // prepare argument before encrypt stack
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register
   dec {{.RegV.eax}}                            {{iji}} // calculate INFINITE (0xFFFFFFFF)

@@ -15,12 +15,13 @@
 
 // steps:
 //   encrypt return address
+//   encrypt critical instructions to shelter
 //   adjust the critical memory page protect
-//   encrypt the critical instructions
+//   erase the critical instructions
 //   encrypt stack about structure
 //   call WaitForSingleObject
 //   decrypt stack about structure
-//   decrypt the critical instructions
+//   recover the critical instructions from shelter
 //   restore the critical memory page protect
 //   decrypt return address
 
@@ -57,6 +58,12 @@ entry:
   xor {{.RegV.ecx}}, {{.RegN.ebx}}             {{iji}}
   mov [esp + 3*4], {{.RegV.ecx}}               {{iji}}
 
+  // encrypt the critical memory to shelter
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // set critical address
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set critical size
+  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set shelter address
+  call xor_buf                                 {{iji}}
+
   // encrypt address of WaitForSingleObject
   xor [{{.RegN.ebp}} + 1*4], {{.RegN.ebx}}     {{iji}}
 
@@ -66,11 +73,6 @@ entry:
 
   // decrypt address of WaitForSingleObject
   xor [{{.RegN.ebp}} + 1*4], {{.RegN.ebx}}     {{iji}}
-
-  // encrypt the critical memory
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get critical address
-  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set the critical size
-  call xor_buf                                 {{iji}}
 
   // prepare argument before encrypt stack
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register
@@ -85,8 +87,9 @@ entry:
   push {{.RegV.eax}}                           {{iji}}
 
   // encrypt argument structure
-  mov {{.RegV.ecx}}, {{.RegN.ebp}}             {{iji}} // get structure pointer
+  mov {{.RegV.ecx}}, {{.RegN.ebp}}             {{iji}} // set structure pointer
   mov {{.RegV.edx}}, 7*4                       {{iji}} // set the buffer size
+  mov {{.RegV.eax}}, {{.RegN.ebp}}             {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
   // Sleep with WaitForSingleObject
@@ -94,13 +97,15 @@ entry:
   call {{.RegV.eax}}                           {{iji}} // call WaitForSingleObject
 
   // decrypt argument structure
-  mov {{.RegV.ecx}}, {{.RegN.ebp}}             {{iji}} // get structure pointer
+  mov {{.RegV.ecx}}, {{.RegN.ebp}}             {{iji}} // set structure pointer
   mov {{.RegV.edx}}, 7*4                       {{iji}} // set the buffer size
+  mov {{.RegV.eax}}, {{.RegN.ebp}}             {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
-  // decrypt the critical memory
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get critical address
-  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set the critical size
+  // recover the critical memory from shelter
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set shelter address
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set shelter size
+  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // set critical address
   call xor_buf                                 {{iji}}
 
   // recover the page protect to old protect
@@ -119,12 +124,17 @@ entry:
   ret 4                                        {{iji}}
 
 xor_buf:
+  push {{.RegN.esi}}                           {{iji}} // save register
   shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
  loop_xor:
-  xor [{{.RegV.ecx}}], {{.RegN.ebx}}           {{iji}} // encrypt data with crypto key
-  add {{.RegV.ecx}}, 4                         {{iji}} // add data address
+  mov {{.RegN.esi}}, [{{.RegV.ecx}}]           {{iji}} // load data from source
+  mov [{{.RegV.eax}}], {{.RegN.esi}}           {{iji}} // copy data to destination
+  xor [{{.RegV.eax}}], {{.RegN.ebx}}           {{iji}} // encrypt data with crypto key
+  add {{.RegV.ecx}}, 4                         {{iji}} // add source address
+  add {{.RegV.eax}}, 4                         {{iji}} // add destination address
   dec {{.RegV.edx}}                            {{iji}} // update loop count
   jnz loop_xor                                 {{iji}} // check need decrypt again
+  pop {{.RegN.esi}}                            {{iji}} // restore register
   ret                                          {{iji}}
 
 protect:

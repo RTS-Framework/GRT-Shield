@@ -25,8 +25,6 @@
 //   restore the critical memory page protect
 //   decrypt return address
 
-// TODO // prevent the fixed crypto key
-
 entry:
   // check argument is valid
   test rcx, rcx                                {{iji}}
@@ -44,10 +42,11 @@ entry:
   mov {{.RegN.rbx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // save crypto key
 
   // prevent the fixed crypto key
+  xor {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
   ror {{.RegN.rbx}}, 7                         {{iji}}
   xor {{.RegN.rbx}}, rcx                       {{iji}}
   rol {{.RegN.rbx}}, 13                        {{iji}}
-  add {{.RegN.rbx}}, [{{.RegN.rbp}} + 2*8]     {{iji}}
+  add {{.RegN.rbx}}, {{.RegV.rcx}}             {{iji}}
   ror {{.RegN.rbx}}, 4                         {{iji}}
 
   // destroy CryptoKey in the stack

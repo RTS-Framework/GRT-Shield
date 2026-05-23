@@ -5,20 +5,21 @@
 //   the CriticalSize must be 4 bytes aligned
 
 // struct:
-//   [ebp + 0*4]  Method
-//   [ebp + 1*4]  VirtualProtect
-//   [ebp + 2*4]  WaitForSingleObject
-//   [ebp + 3*4]  CriticalAddress
-//   [ebp + 4*4]  CriticalSize
+//   ======== Sleep ========                               ======== Free ========
+//   [ebp + 0*4]  Method                                   [ebp + 0*4]  Method
+//   [ebp + 1*4]  VirtualProtect                           [ebp + 1*4]  VirtualFree
+//   [ebp + 2*4]  WaitForSingleObject                      [ebp + 2*4]  ExitThread
+//   [ebp + 3*4]  CriticalAddress                          [ebp + 3*4]  Address
+//   [ebp + 4*4]  CriticalSize                             [ebp + 4*4]  Size
 //   [ebp + 5*4]  ShelterAddress
 //   [ebp + 6*4]  TimerHandle
 //   [ebp + 7*4]  CryptoKey
 
 // step:
-//   encrypt return address
-//   encrypt critical instructions to shelter
-//   adjust the critical memory page protect
-//   erase the critical instructions
+//   encrypt return address                                erase return address
+//   encrypt critical instructions to shelter              erase critical memory
+//   adjust the critical memory page protect               free critical memory page
+//   erase the critical instructions                       exit thread
 //   encrypt stack about structure
 //   call WaitForSingleObject
 //   decrypt stack about structure
@@ -27,13 +28,22 @@
 //   decrypt return address
 
 entry:
-  // check argument is valid
+  // check argument pointer is NULL
   mov {{.RegV.ecx}}, [esp+4]                   {{iji}}
   test {{.RegV.ecx}}, {{.RegV.ecx}}            {{iji}}
-  jnz next                                     {{iji}}
-  ret 4                                        {{iji}}
- next:
+  jz exit                                      {{iji}}
 
+  // check method and dispatch
+  mov {{.RegV.eax}}, [{{.RegV.ecx}}]           {{iji}}
+  cmp {{.RegV.eax}}, 1                         {{iji}}
+  je method_sleep                              {{iji}}
+  cmp {{.RegV.eax}}, 2                         {{iji}}
+  je method_free                               {{iji}}
+
+ exit:
+  ret 4                                        {{iji}}
+
+method_sleep:
   // save context
   push {{.RegN.ebp}}                           {{iji}} // for save structure pointer
   push {{.RegN.ebx}}                           {{iji}} // for save crypto key
@@ -135,6 +145,36 @@ entry:
   pop {{.RegN.ebx}}                            {{iji}}
   pop {{.RegN.ebp}}                            {{iji}}
   ret 4                                        {{iji}}
+
+method_free:
+  mov {{.RegN.ebp}}, [esp + 4]                 {{iji}} // save structure pointer
+  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get address of ExitThread
+  push {{.RegV.eax}}                           {{iji}} // save ExitThread address on stack
+
+  // erase the critical memory
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set address
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set size
+  shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
+  xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // zero value
+ loop_erase_free:
+  mov [{{.RegV.ecx}}], {{.RegV.eax}}           {{iji}} // erase data
+  add {{.RegV.ecx}}, 4                         {{iji}} // next field
+  dec {{.RegV.edx}}                            {{iji}} // update loop count
+  jnz loop_erase_free                          {{iji}} // check need erase next
+
+  // call VirtualFree
+  push 0x4000                                  {{iji}} // dwFreeType = MEM_RELEASE
+  push 0                                       {{iji}} // dwSize = 0
+  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // reload address (ecx was clobbered)
+  push {{.RegV.eax}}                           {{iji}} // lpAddress
+  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 1*4]     {{iji}} // get address of VirtualFree
+  call {{.RegV.eax}}                           {{iji}} // call VirtualFree
+
+  // call ExitThread
+  pop {{.RegV.eax}}                            {{iji}} // restore ExitThread address
+  push 0                                       {{iji}} // dwExitCode = 0
+  call {{.RegV.eax}}                           {{iji}} // call ExitThread
+  int3                                         {{iji}} // unreachable
 
 xor_buf:
   push {{.RegN.esi}}                           {{iji}} // save register

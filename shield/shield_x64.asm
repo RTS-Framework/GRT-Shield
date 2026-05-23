@@ -10,7 +10,7 @@
 //   [rbp + 1*8]  VirtualProtect                           [rbp + 1*8]  VirtualFree
 //   [rbp + 2*8]  WaitForSingleObject                      [rbp + 2*8]  ExitThread
 //   [rbp + 3*8]  CriticalAddress                          [rbp + 3*8]  Address
-//   [rbp + 4*8]  CriticalSize
+//   [rbp + 4*8]  CriticalSize                             [rbp + 4*8]  Size
 //   [rbp + 5*8]  ShelterAddress
 //   [rbp + 6*8]  TimerHandle
 //   [rbp + 7*8]  CryptoKey
@@ -28,7 +28,7 @@
 //   decrypt return address
 
 entry:
-  // check argument is valid
+  // check argument pointer is NULL
   test rcx, rcx                                {{iji}}
   jz exit                                      {{iji}}
 
@@ -152,21 +152,20 @@ method_sleep:
   ret                                          {{iji}}
 
 method_free:
-  push {{.RegN.rbx}}                           {{iji}}
-  mov {{.RegN.rbx}}, rcx                       {{iji}} // save struct pointer
-  mov rax, [{{.RegN.rbx}} + 1*8]               {{iji}} // get VirtualFree address
-  xor [{{.RegN.rbx}} + 1*8], rax               {{iji}} // encrypt VirtualFree address
-  mov rcx, [{{.RegN.rbx}} + 3*8]               {{iji}} // lpAddress
+  mov {{.RegN.rbp}}, rcx                       {{iji}} // save structure pointer
+  mov rax, [{{.RegN.rbp}} + 1*8]               {{iji}} // get address of VirtualFree
+  mov rcx, [{{.RegN.rbp}} + 3*8]               {{iji}} // lpAddress
   xor rdx, rdx                                 {{iji}} // dwSize = 0
   mov r8, 0x4000                               {{iji}} // dwFreeType = MEM_RELEASE
-  xor [{{.RegN.rbx}} + 1*8], rax               {{iji}} // decrypt VirtualFree address
-  sub rsp, 0x20                                {{iji}} // shadow space
+  sub rsp, 0x20                                {{iji}} // reserve stack for call convention
   call rax                                     {{iji}} // call VirtualFree
-  add rsp, 0x20                                {{iji}}
-  pop {{.RegN.rbx}}                            {{iji}}
-  mov rax, [{{.RegN.rbx}} + 2*8]               {{iji}} // get ExitThread address
+  add rsp, 0x20                                {{iji}} // restore stack for call convention
+  mov rax, [{{.RegN.rbp}} + 2*8]               {{iji}} // get ExitThread address
   xor rcx, rcx                                 {{iji}} // dwExitCode = 0
-  jmp rax                                      {{iji}} // jump to ExitThread (no return)
+  sub rsp, 0x20                                {{iji}} // reserve stack for call convention
+  call rax                                     {{iji}} // call ExitThread
+  add rsp, 0x20                                {{iji}} // restore stack for call convention
+  int3                                         {{iji}} // unreachable
 
 xor_buf:
   shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count

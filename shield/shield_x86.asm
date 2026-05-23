@@ -44,11 +44,11 @@ entry:
 
   // prevent the fixed crypto key
   xor {{.RegN.ebx}}, {{.RegV.eax}}             {{iji}}
-  ror {{.RegN.ebx}}, 7                         {{iji}}
+  ror {{.RegN.ebx}}, {{.Less16.A}}             {{iji}}
   xor {{.RegN.ebx}}, {{.RegN.ebp}}             {{iji}}
-  rol {{.RegN.ebx}}, 13                        {{iji}}
+  rol {{.RegN.ebx}}, {{.Less32.A}}             {{iji}}
   add {{.RegN.ebx}}, {{.RegV.ecx}}             {{iji}}
-  ror {{.RegN.ebx}}, 4                         {{iji}}
+  ror {{.RegN.ebx}}, {{.Less16.B}}             {{iji}}
 
   // destroy CryptoKey in the stack
   xor {{.RegV.edx}}, {{.RegV.edx}}             {{iji}}

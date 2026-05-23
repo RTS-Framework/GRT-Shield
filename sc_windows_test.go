@@ -44,6 +44,7 @@ type testFreeArgs struct {
 	VirtualFree uintptr
 	ExitThread  uintptr
 	Address     uintptr
+	Size        uintptr
 }
 
 func testShield(t *testing.T, shield []byte, sleep time.Duration) {
@@ -109,12 +110,13 @@ func testBuildSleepArgs(t *testing.T, critical, shelter []byte, sleep time.Durat
 	return args
 }
 
-func testBuildFreeArgs(address uintptr) *testFreeArgs {
+func testBuildFreeArgs(critical []byte) *testFreeArgs {
 	args := &testFreeArgs{
 		Method:      methodFree,
 		VirtualFree: procVirtualFree.Addr(),
 		ExitThread:  procExitThread.Addr(),
-		Address:     address,
+		Address:     uintptr(unsafe.Pointer(&critical[0])),
+		Size:        uintptr(len(critical)),
 	}
 	return args
 }

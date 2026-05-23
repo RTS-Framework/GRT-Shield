@@ -23,6 +23,10 @@ type shieldCtx struct {
 	// for replace registers
 	RegV map[string]string
 	RegN map[string]string
+
+	// for random immediate data with [1, 15] and [1, 31]
+	Less16 map[string]int
+	Less32 map[string]int
 }
 
 func (gen *Generator) buildShield(shield string) (output string, err error) {
@@ -39,10 +43,6 @@ func (gen *Generator) buildShield(shield string) (output string, err error) {
 			shield = gen.getShieldX64()
 		}
 	}
-	ctx := &shieldCtx{
-		RegV: gen.buildVolatileRegisterMap(),
-		RegN: gen.buildNonvolatileRegisterMap(),
-	}
 	tpl, err := template.New("shield").Funcs(template.FuncMap{
 		"db":  toDB,
 		"hex": toHex,
@@ -50,6 +50,18 @@ func (gen *Generator) buildShield(shield string) (output string, err error) {
 	}).Parse(shield)
 	if err != nil {
 		return "", fmt.Errorf("invalid shield template: %s", err)
+	}
+	Less16 := make(map[string]int)
+	Less32 := make(map[string]int)
+	for i := 'A'; i <= 'Z'; i++ {
+		Less16[string(i)] = 1 + gen.rand.Intn(15)
+		Less32[string(i)] = 1 + gen.rand.Intn(31)
+	}
+	ctx := &shieldCtx{
+		RegV:   gen.buildVolatileRegisterMap(),
+		RegN:   gen.buildNonvolatileRegisterMap(),
+		Less16: Less16,
+		Less32: Less32,
 	}
 	buf := bytes.NewBuffer(make([]byte, 0, 512))
 	err = tpl.Execute(buf, ctx)

@@ -8,6 +8,12 @@ import (
 	"text/template"
 )
 
+// methods for provide to the shield.
+const (
+	methodSleep = 1 // hide Gleam-RT and sleep
+	methodFree  = 2 // free Gleam-RT and exit thread
+)
+
 // just for prevent [import _ "embed"] :)
 var _ embed.FS
 

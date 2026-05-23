@@ -5,20 +5,21 @@
 //   the CriticalSize must be 8 bytes aligned
 
 // struct:
-//   [rbp + 0*8]  Method
-//   [rbp + 1*8]  VirtualProtect
-//   [rbp + 2*8]  WaitForSingleObject
-//   [rbp + 3*8]  CriticalAddress
+//   ======== Sleep ========                               ======== Free ========
+//   [rbp + 0*8]  Method                                   [rbp + 0*8]  Method
+//   [rbp + 1*8]  VirtualProtect                           [rbp + 1*8]  VirtualFree
+//   [rbp + 2*8]  WaitForSingleObject                      [rbp + 2*8]  ExitThread
+//   [rbp + 3*8]  CriticalAddress                          [rbp + 3*8]  Address
 //   [rbp + 4*8]  CriticalSize
 //   [rbp + 5*8]  ShelterAddress
 //   [rbp + 6*8]  TimerHandle
 //   [rbp + 7*8]  CryptoKey
 
-// steps:
-//   encrypt return address
-//   encrypt critical instructions to shelter
-//   adjust the critical memory page protect
-//   erase the critical instructions
+// step:
+//   encrypt return address                                erase return address
+//   encrypt critical instructions to shelter              erase critical memory
+//   adjust the critical memory page protect               free critical memory page
+//   erase the critical instructions                       exit thread
 //   encrypt stack about structure
 //   call WaitForSingleObject
 //   decrypt stack about structure
@@ -29,10 +30,19 @@
 entry:
   // check argument is valid
   test rcx, rcx                                {{iji}}
-  jnz next                                     {{iji}}
-  ret                                          {{iji}}
- next:
+  jz exit                                      {{iji}}
 
+  // check method and dispatch
+  mov {{.RegV.rax}}, [rcx]                     {{iji}}
+  cmp {{.RegV.rax}}, 1                         {{iji}}
+  je method_sleep                              {{iji}}
+  cmp {{.RegV.rax}}, 2                         {{iji}}
+  je method_free                               {{iji}}
+
+ exit:
+  ret                                          {{iji}}
+
+method_sleep:
   // save context and ensure stack is 16 bytes alignd
   push {{.RegN.rbp}}                           {{iji}} // for save structure pointer
   push {{.RegN.rbx}}                           {{iji}} // for save crypto key
@@ -140,6 +150,23 @@ entry:
   pop {{.RegN.rbx}}                            {{iji}}
   pop {{.RegN.rbp}}                            {{iji}}
   ret                                          {{iji}}
+
+method_free:
+  push {{.RegN.rbx}}                           {{iji}}
+  mov {{.RegN.rbx}}, rcx                       {{iji}} // save struct pointer
+  mov rax, [{{.RegN.rbx}} + 1*8]               {{iji}} // get VirtualFree address
+  xor [{{.RegN.rbx}} + 1*8], rax               {{iji}} // encrypt VirtualFree address
+  mov rcx, [{{.RegN.rbx}} + 3*8]               {{iji}} // lpAddress
+  xor rdx, rdx                                 {{iji}} // dwSize = 0
+  mov r8, 0x4000                               {{iji}} // dwFreeType = MEM_RELEASE
+  xor [{{.RegN.rbx}} + 1*8], rax               {{iji}} // decrypt VirtualFree address
+  sub rsp, 0x20                                {{iji}} // shadow space
+  call rax                                     {{iji}} // call VirtualFree
+  add rsp, 0x20                                {{iji}}
+  pop {{.RegN.rbx}}                            {{iji}}
+  mov rax, [{{.RegN.rbx}} + 2*8]               {{iji}} // get ExitThread address
+  xor rcx, rcx                                 {{iji}} // dwExitCode = 0
+  jmp rax                                      {{iji}} // jump to ExitThread (no return)
 
 xor_buf:
   shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count

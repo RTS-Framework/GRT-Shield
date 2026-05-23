@@ -19,14 +19,17 @@ import (
 var (
 	modKernel32 = syscall.NewLazyDLL("kernel32.dll")
 
+	procVirtualFree           = modKernel32.NewProc("VirtualFree")
 	procVirtualProtect        = modKernel32.NewProc("VirtualProtect")
 	procWaitForSingleObject   = modKernel32.NewProc("WaitForSingleObject")
 	procCreateWaitableTimerA  = modKernel32.NewProc("CreateWaitableTimerA")
 	procSetWaitableTimer      = modKernel32.NewProc("SetWaitableTimer")
 	procFlushInstructionCache = modKernel32.NewProc("FlushInstructionCache")
+	procExitThread            = modKernel32.NewProc("ExitThread")
 )
 
-type testShieldArgs struct {
+type testSleepArgs struct {
+	Method              uintptr
 	VirtualProtect      uintptr
 	WaitForSingleObject uintptr
 	CriticalAddress     uintptr
@@ -34,6 +37,13 @@ type testShieldArgs struct {
 	ShelterAddress      uintptr
 	TimerHandle         uintptr
 	CryptoKey           uintptr
+}
+
+type testFreeArgs struct {
+	Method      uintptr
+	VirtualFree uintptr
+	ExitThread  uintptr
+	Address     uintptr
 }
 
 func testShield(t *testing.T, shield []byte, sleep time.Duration) {
@@ -50,12 +60,12 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 
 	now := time.Now()
 
-	args := testBuildShieldArgs(t, critical, shelter, sleep)
+	args := testBuildSleepArgs(t, critical, shelter, sleep)
 	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
 	err := windows.CloseHandle(windows.Handle(args.TimerHandle))
 	require.NoError(t, err)
 
-	args = testBuildShieldArgs(t, critical, shelter, sleep)
+	args = testBuildSleepArgs(t, critical, shelter, sleep)
 	args.VirtualProtect = 0 // not adjust critical page protect
 	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
 	err = windows.CloseHandle(windows.Handle(args.TimerHandle))
@@ -70,7 +80,7 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	runtime.KeepAlive(shelter)
 }
 
-func testBuildShieldArgs(t *testing.T, critical, shelter []byte, sleep time.Duration) *testShieldArgs {
+func testBuildSleepArgs(t *testing.T, critical, shelter []byte, sleep time.Duration) *testSleepArgs {
 	hTimer, _, err := procCreateWaitableTimerA.Call(0, 0, 0)
 	if hTimer == 0 {
 		require.NoError(t, err)
@@ -86,7 +96,8 @@ func testBuildShieldArgs(t *testing.T, critical, shelter []byte, sleep time.Dura
 	require.NoError(t, err)
 	cryptoKey := uintptr(binary.LittleEndian.Uint64(buf))
 
-	args := &testShieldArgs{
+	args := &testSleepArgs{
+		Method:              methodSleep,
 		VirtualProtect:      procVirtualProtect.Addr(),
 		WaitForSingleObject: procWaitForSingleObject.Addr(),
 		CriticalAddress:     uintptr(unsafe.Pointer(&critical[0])),
@@ -94,6 +105,16 @@ func testBuildShieldArgs(t *testing.T, critical, shelter []byte, sleep time.Dura
 		ShelterAddress:      uintptr(unsafe.Pointer(&shelter[0])),
 		TimerHandle:         hTimer,
 		CryptoKey:           cryptoKey,
+	}
+	return args
+}
+
+func testBuildFreeArgs(address uintptr) *testFreeArgs {
+	args := &testFreeArgs{
+		Method:      methodFree,
+		VirtualFree: procVirtualFree.Addr(),
+		ExitThread:  procExitThread.Addr(),
+		Address:     address,
 	}
 	return args
 }

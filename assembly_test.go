@@ -115,6 +115,172 @@ func TestBuildNonvolatileRegisterMap(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestToRegDWORD(t *testing.T) {
+	for _, item := range []*struct {
+		input  string
+		output string
+	}{
+		{"rax", "eax"},
+		{"rbx", "ebx"},
+		{"rcx", "ecx"},
+		{"rdx", "edx"},
+		{"rdi", "edi"},
+		{"rsi", "esi"},
+		{"rsp", "esp"},
+		{"r8", "r8d"},
+		{"r9", "r9d"},
+		{"r10", "r10d"},
+		{"r11", "r11d"},
+		{"r12", "r12d"},
+		{"r13", "r13d"},
+		{"r14", "r14d"},
+		{"r15", "r15d"},
+	} {
+		output := toRegDWORD(item.input)
+		require.Equal(t, item.output, output)
+	}
+}
+
+func TestToRegWORD(t *testing.T) {
+	t.Run("64-bit registers", func(t *testing.T) {
+		for _, item := range []*struct {
+			input  string
+			output string
+		}{
+			{"rax", "ax"},
+			{"rbx", "bx"},
+			{"rcx", "cx"},
+			{"rdx", "dx"},
+			{"rdi", "di"},
+			{"rsi", "si"},
+			{"rsp", "sp"},
+			{"rbp", "bp"},
+			{"r8", "r8w"},
+			{"r9", "r9w"},
+			{"r10", "r10w"},
+			{"r11", "r11w"},
+			{"r12", "r12w"},
+			{"r13", "r13w"},
+			{"r14", "r14w"},
+			{"r15", "r15w"},
+		} {
+			output := toRegWORD(item.input)
+			require.Equal(t, item.output, output)
+		}
+	})
+
+	t.Run("32-bit registers", func(t *testing.T) {
+		for _, item := range []*struct {
+			input  string
+			output string
+		}{
+			{"eax", "ax"},
+			{"ebx", "bx"},
+			{"ecx", "cx"},
+			{"edx", "dx"},
+			{"edi", "di"},
+			{"esi", "si"},
+			{"esp", "sp"},
+			{"ebp", "bp"},
+		} {
+			output := toRegWORD(item.input)
+			require.Equal(t, item.output, output)
+		}
+	})
+
+	t.Run("invalid register", func(t *testing.T) {
+		require.Panics(t, func() {
+			toRegWORD("xmm0")
+		})
+	})
+}
+
+func TestToRegBYTE(t *testing.T) {
+	t.Run("64-bit registers", func(t *testing.T) {
+		for _, item := range []*struct {
+			input  string
+			output string
+		}{
+			{"rax", "al"},
+			{"rbx", "bl"},
+			{"rcx", "cl"},
+			{"rdx", "dl"},
+			{"rdi", "dil"},
+			{"rsi", "sil"},
+			{"rsp", "spl"},
+			{"rbp", "bpl"},
+			{"r8", "r8b"},
+			{"r9", "r9b"},
+			{"r10", "r10b"},
+			{"r11", "r11b"},
+			{"r12", "r12b"},
+			{"r13", "r13b"},
+			{"r14", "r14b"},
+			{"r15", "r15b"},
+		} {
+			output := toRegBYTE(item.input)
+			require.Equal(t, item.output, output)
+		}
+	})
+
+	t.Run("32-bit registers", func(t *testing.T) {
+		for _, item := range []*struct {
+			input  string
+			output string
+		}{
+			{"eax", "al"},
+			{"ebx", "bl"},
+			{"ecx", "cl"},
+			{"edx", "dl"},
+			{"edi", "dil"},
+			{"esi", "sil"},
+			{"esp", "spl"},
+			{"ebp", "bpl"},
+		} {
+			output := toRegBYTE(item.input)
+			require.Equal(t, item.output, output)
+		}
+	})
+
+	t.Run("invalid register", func(t *testing.T) {
+		require.Panics(t, func() {
+			toRegBYTE("xmm0")
+		})
+	})
+}
+
+func TestToRegHigh8Bit(t *testing.T) {
+	t.Run("64-bit registers", func(t *testing.T) {
+		for _, item := range []*struct {
+			input  string
+			output string
+		}{
+			{"rax", "ah"},
+			{"rbx", "bh"},
+			{"rcx", "ch"},
+			{"rdx", "dh"},
+		} {
+			output := toRegHigh8Bit(item.input)
+			require.Equal(t, item.output, output)
+		}
+	})
+
+	t.Run("32-bit registers", func(t *testing.T) {
+		for _, item := range []*struct {
+			input  string
+			output string
+		}{
+			{"eax", "ah"},
+			{"ebx", "bh"},
+			{"ecx", "ch"},
+			{"edx", "dh"},
+		} {
+			output := toRegHigh8Bit(item.input)
+			require.Equal(t, item.output, output)
+		}
+	})
+}
+
 func TestPrintInstructions(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
 		binHex, insts, err := printInstructions(testAddX86, 32)
@@ -149,30 +315,4 @@ func TestToDB(t *testing.T) {
 func TestToHex(t *testing.T) {
 	output := toHex(15)
 	require.Equal(t, "0xF", output)
-}
-
-func TestToRegDWORD(t *testing.T) {
-	for _, item := range []*struct {
-		input  string
-		output string
-	}{
-		{"rax", "eax"},
-		{"rbx", "ebx"},
-		{"rcx", "ecx"},
-		{"rdx", "edx"},
-		{"rdi", "edi"},
-		{"rsi", "esi"},
-		{"rsp", "esp"},
-		{"r8", "r8d"},
-		{"r9", "r9d"},
-		{"r10", "r10d"},
-		{"r11", "r11d"},
-		{"r12", "r12d"},
-		{"r13", "r13d"},
-		{"r14", "r14d"},
-		{"r15", "r15d"},
-	} {
-		output := toRegDWORD(item.input)
-		require.Equal(t, item.output, output)
-	}
 }

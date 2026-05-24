@@ -199,11 +199,67 @@ func toHex(v any) string {
 	return fmt.Sprintf("0x%X", v)
 }
 
-// convert r8 -> r8d, rax -> eax
+// map r8 -> r8d, rax -> eax
 func toRegDWORD(reg string) string {
 	_, err := strconv.Atoi(reg[1:])
 	if err == nil {
 		return reg + "d"
 	}
 	return strings.ReplaceAll(reg, "r", "e")
+}
+
+// map r8 -> r8w, rax -> ax, eax -> ax
+func toRegWORD(reg string) string {
+	_, err := strconv.Atoi(reg[1:])
+	if err == nil {
+		return reg + "w"
+	}
+	switch reg {
+	case "rax", "eax":
+		return "ax"
+	case "rbx", "ebx":
+		return "bx"
+	case "rcx", "ecx":
+		return "cx"
+	case "rdx", "edx":
+		return "dx"
+	case "rdi", "edi":
+		return "di"
+	case "rsi", "esi":
+		return "si"
+	case "rbp", "ebp":
+		return "bp"
+	case "rsp", "esp":
+		return "sp"
+	default:
+		panic(fmt.Sprintf("invalid register %s", reg))
+	}
+}
+
+// map r8 -> r8b, rax -> al, eax -> al
+func toRegBYTE(reg string) string {
+	_, err := strconv.Atoi(reg[1:])
+	if err == nil {
+		return reg + "b"
+	}
+	switch reg {
+	case "rax", "eax":
+		return "al"
+	case "rbx", "ebx":
+		return "bl"
+	case "rcx", "ecx":
+		return "cl"
+	case "rdx", "edx":
+		return "dl"
+	case "rdi", "edi":
+		return "dil"
+	case "rsi", "esi":
+		return "sil"
+	case "rbp", "ebp":
+		return "bpl"
+	case "rsp", "esp":
+		return "spl"
+	default:
+		panic(fmt.Sprintf("invalid register %s", reg))
+	}
 }

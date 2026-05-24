@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -54,7 +53,7 @@ func (gen *Generator) buildRandomRegisterMap() map[string]string {
 	}
 	reg := gen.shuffleRegisterMap(registers)
 	if gen.arch == 64 {
-		gen.buildLowBitRegisterMap(reg)
+		gen.buildDWORDBitRegisterMap(reg)
 	}
 	return reg
 }
@@ -69,7 +68,7 @@ func (gen *Generator) buildVolatileRegisterMap() map[string]string {
 	}
 	reg := gen.shuffleRegisterMap(registers)
 	if gen.arch == 64 {
-		gen.buildLowBitRegisterMap(reg)
+		gen.buildDWORDBitRegisterMap(reg)
 	}
 	return reg
 }
@@ -84,7 +83,7 @@ func (gen *Generator) buildNonvolatileRegisterMap() map[string]string {
 	}
 	reg := gen.shuffleRegisterMap(registers)
 	if gen.arch == 64 {
-		gen.buildLowBitRegisterMap(reg)
+		gen.buildDWORDBitRegisterMap(reg)
 	}
 	return reg
 }
@@ -115,12 +114,44 @@ func (gen *Generator) shuffleRegisterMap(registers []string) map[string]string {
 }
 
 // build register map about low dword
-func (gen *Generator) buildLowBitRegisterMap(regMap map[string]string) {
+func (gen *Generator) buildDWORDBitRegisterMap(regMap map[string]string) map[string]string {
 	low := make(map[string]string, len(regMap))
 	for src, dst := range regMap {
 		low[toRegDWORD(src)] = toRegDWORD(dst)
 	}
-	maps.Copy(regMap, low)
+	return low
+}
+
+// build register map about low word
+func (gen *Generator) buildWORDRegisterMap(regMap map[string]string) map[string]string {
+	word := make(map[string]string, len(regMap))
+	for src, dst := range regMap {
+		word[toRegWORD(src)] = toRegWORD(dst)
+	}
+	return word
+}
+
+// build register map about low byte
+func (gen *Generator) buildBYTERegisterMap(regMap map[string]string) map[string]string {
+	b := make(map[string]string, len(regMap))
+	for src, dst := range regMap {
+		b[toRegBYTE(src)] = toRegBYTE(dst)
+	}
+	return b
+}
+
+// build register map about high byte
+func (gen *Generator) buildHigh8BitRegisterMap(regMap map[string]string) map[string]string {
+	high := make(map[string]string, len(regMap))
+	for src, dst := range regMap {
+		s := toRegHigh8Bit(src)
+		d := toRegHigh8Bit(dst)
+		if s == "" || d == "" {
+			continue
+		}
+		high[s] = d
+	}
+	return high
 }
 
 func printInstructions(src []byte, mode int) (string, string, error) {
@@ -261,5 +292,21 @@ func toRegBYTE(reg string) string {
 		return "spl"
 	default:
 		panic(fmt.Sprintf("invalid register %s", reg))
+	}
+}
+
+// map rax -> ah, ebx -> bh
+func toRegHigh8Bit(reg string) string {
+	switch reg {
+	case "rax", "eax":
+		return "ah"
+	case "rbx", "ebx":
+		return "bh"
+	case "rcx", "ecx":
+		return "ch"
+	case "rdx", "edx":
+		return "dh"
+	default:
+		return ""
 	}
 }

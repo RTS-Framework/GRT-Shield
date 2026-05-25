@@ -203,8 +203,6 @@ func mapRegWORD(reg string) string {
 		return "si"
 	case "rbp", "ebp":
 		return "bp"
-	case "rsp", "esp":
-		return "sp"
 	default:
 		panic(fmt.Sprintf("invalid register %s", reg))
 	}
@@ -231,8 +229,6 @@ func mapRegBYTE(reg string) string {
 		return "sil"
 	case "rbp", "ebp":
 		return "bpl"
-	case "rsp", "esp":
-		return "spl"
 	default:
 		panic(fmt.Sprintf("invalid register %s", reg))
 	}

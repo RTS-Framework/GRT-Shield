@@ -153,7 +153,6 @@ func TestMapRegWORD(t *testing.T) {
 			{"edx", "dx"},
 			{"edi", "di"},
 			{"esi", "si"},
-			{"esp", "sp"},
 			{"ebp", "bp"},
 		} {
 			output := mapRegWORD(item.input)
@@ -172,7 +171,6 @@ func TestMapRegWORD(t *testing.T) {
 			{"rdx", "dx"},
 			{"rdi", "di"},
 			{"rsi", "si"},
-			{"rsp", "sp"},
 			{"rbp", "bp"},
 			{"r8", "r8w"},
 			{"r9", "r9w"},
@@ -207,7 +205,6 @@ func TestMapRegBYTE(t *testing.T) {
 			{"edx", "dl"},
 			{"edi", "dil"},
 			{"esi", "sil"},
-			{"esp", "spl"},
 			{"ebp", "bpl"},
 		} {
 			output := mapRegBYTE(item.input)
@@ -226,7 +223,6 @@ func TestMapRegBYTE(t *testing.T) {
 			{"rdx", "dl"},
 			{"rdi", "dil"},
 			{"rsi", "sil"},
-			{"rsp", "spl"},
 			{"rbp", "bpl"},
 			{"r8", "r8b"},
 			{"r9", "r9b"},

@@ -102,13 +102,16 @@ method_sleep:
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set decoy address
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // set decoy size (loop count)
   mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
+  test {{.RegV.rdx}}, {{.RegV.rdx}}            {{iji}} // check decoy size is zero
+  jz skip_decoy                                {{iji}} // check need skip
  loop_decoy:
-  movzx {{.RegV.r8}}, byte [{{.RegV.rcx}}]     {{iji}} // load one byte from decoy
+  movzx {{.RegV.r8}}, byte ptr [{{.RegV.rcx}}] {{iji}} // load one byte from decoy
   mov [{{.RegV.rax}}], {{.RegV.r8b}}           {{iji}} // write one byte to critical
   inc {{.RegV.rcx}}                            {{iji}} // update decoy address
   inc {{.RegV.rax}}                            {{iji}} // update critical address
   dec {{.RegV.rdx}}                            {{iji}} // update loop count
   jnz loop_decoy                               {{iji}} // check need fill next
+ skip_decoy:
 
   // prepare argument before encrypt stack
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register

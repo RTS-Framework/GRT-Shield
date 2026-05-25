@@ -115,7 +115,7 @@ func TestBuildNonvolatileRegisterMap(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestToRegDWORD(t *testing.T) {
+func TestMapRegDWORD(t *testing.T) {
 	for _, item := range []*struct {
 		input  string
 		output string
@@ -136,12 +136,12 @@ func TestToRegDWORD(t *testing.T) {
 		{"r14", "r14d"},
 		{"r15", "r15d"},
 	} {
-		output := toRegDWORD(item.input)
+		output := mapRegDWORD(item.input)
 		require.Equal(t, item.output, output)
 	}
 }
 
-func TestToRegWORD(t *testing.T) {
+func TestMapRegWORD(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
 		for _, item := range []*struct {
 			input  string
@@ -156,7 +156,7 @@ func TestToRegWORD(t *testing.T) {
 			{"esp", "sp"},
 			{"ebp", "bp"},
 		} {
-			output := toRegWORD(item.input)
+			output := mapRegWORD(item.input)
 			require.Equal(t, item.output, output)
 		}
 	})
@@ -183,19 +183,19 @@ func TestToRegWORD(t *testing.T) {
 			{"r14", "r14w"},
 			{"r15", "r15w"},
 		} {
-			output := toRegWORD(item.input)
+			output := mapRegWORD(item.input)
 			require.Equal(t, item.output, output)
 		}
 	})
 
 	t.Run("invalid register", func(t *testing.T) {
 		require.Panics(t, func() {
-			toRegWORD("xmm0")
+			mapRegWORD("xmm0")
 		})
 	})
 }
 
-func TestToRegBYTE(t *testing.T) {
+func TestMapRegBYTE(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
 		for _, item := range []*struct {
 			input  string
@@ -210,7 +210,7 @@ func TestToRegBYTE(t *testing.T) {
 			{"esp", "spl"},
 			{"ebp", "bpl"},
 		} {
-			output := toRegBYTE(item.input)
+			output := mapRegBYTE(item.input)
 			require.Equal(t, item.output, output)
 		}
 	})
@@ -237,19 +237,19 @@ func TestToRegBYTE(t *testing.T) {
 			{"r14", "r14b"},
 			{"r15", "r15b"},
 		} {
-			output := toRegBYTE(item.input)
+			output := mapRegBYTE(item.input)
 			require.Equal(t, item.output, output)
 		}
 	})
 
 	t.Run("invalid register", func(t *testing.T) {
 		require.Panics(t, func() {
-			toRegBYTE("xmm0")
+			mapRegBYTE("xmm0")
 		})
 	})
 }
 
-func TestToRegHigh8Bit(t *testing.T) {
+func TestMapRegHigh8Bit(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
 		for _, item := range []*struct {
 			input  string
@@ -260,7 +260,7 @@ func TestToRegHigh8Bit(t *testing.T) {
 			{"ecx", "ch"},
 			{"edx", "dh"},
 		} {
-			output := toRegHigh8Bit(item.input)
+			output := mapRegHigh8Bit(item.input)
 			require.Equal(t, item.output, output)
 		}
 	})
@@ -275,7 +275,7 @@ func TestToRegHigh8Bit(t *testing.T) {
 			{"rcx", "ch"},
 			{"rdx", "dh"},
 		} {
-			output := toRegHigh8Bit(item.input)
+			output := mapRegHigh8Bit(item.input)
 			require.Equal(t, item.output, output)
 		}
 	})

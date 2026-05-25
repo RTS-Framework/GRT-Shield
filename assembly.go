@@ -136,7 +136,7 @@ func (gen *Generator) shuffleRegisterMap(registers []string) map[string]string {
 func (gen *Generator) buildDWORDBitRegisterMap(regMap map[string]string) map[string]string {
 	low := make(map[string]string, len(regMap))
 	for src, dst := range regMap {
-		low[toRegDWORD(src)] = toRegDWORD(dst)
+		low[mapRegDWORD(src)] = mapRegDWORD(dst)
 	}
 	return low
 }
@@ -145,7 +145,7 @@ func (gen *Generator) buildDWORDBitRegisterMap(regMap map[string]string) map[str
 func (gen *Generator) buildWORDRegisterMap(regMap map[string]string) map[string]string {
 	word := make(map[string]string, len(regMap))
 	for src, dst := range regMap {
-		word[toRegWORD(src)] = toRegWORD(dst)
+		word[mapRegWORD(src)] = mapRegWORD(dst)
 	}
 	return word
 }
@@ -154,7 +154,7 @@ func (gen *Generator) buildWORDRegisterMap(regMap map[string]string) map[string]
 func (gen *Generator) buildBYTERegisterMap(regMap map[string]string) map[string]string {
 	b := make(map[string]string, len(regMap))
 	for src, dst := range regMap {
-		b[toRegBYTE(src)] = toRegBYTE(dst)
+		b[mapRegBYTE(src)] = mapRegBYTE(dst)
 	}
 	return b
 }
@@ -163,8 +163,8 @@ func (gen *Generator) buildBYTERegisterMap(regMap map[string]string) map[string]
 func (gen *Generator) buildHigh8BitRegisterMap(regMap map[string]string) map[string]string {
 	high := make(map[string]string, len(regMap))
 	for src, dst := range regMap {
-		s := toRegHigh8Bit(src)
-		d := toRegHigh8Bit(dst)
+		s := mapRegHigh8Bit(src)
+		d := mapRegHigh8Bit(dst)
 		if s == "" || d == "" {
 			continue
 		}
@@ -174,7 +174,7 @@ func (gen *Generator) buildHigh8BitRegisterMap(regMap map[string]string) map[str
 }
 
 // map r8 -> r8d, rax -> eax
-func toRegDWORD(reg string) string {
+func mapRegDWORD(reg string) string {
 	_, err := strconv.Atoi(reg[1:])
 	if err == nil {
 		return reg + "d"
@@ -183,7 +183,7 @@ func toRegDWORD(reg string) string {
 }
 
 // map r8 -> r8w, rax -> ax, eax -> ax
-func toRegWORD(reg string) string {
+func mapRegWORD(reg string) string {
 	_, err := strconv.Atoi(reg[1:])
 	if err == nil {
 		return reg + "w"
@@ -211,7 +211,7 @@ func toRegWORD(reg string) string {
 }
 
 // map r8 -> r8b, rax -> al, eax -> al
-func toRegBYTE(reg string) string {
+func mapRegBYTE(reg string) string {
 	_, err := strconv.Atoi(reg[1:])
 	if err == nil {
 		return reg + "b"
@@ -239,7 +239,7 @@ func toRegBYTE(reg string) string {
 }
 
 // map rax -> ah, ebx -> bh
-func toRegHigh8Bit(reg string) string {
+func mapRegHigh8Bit(reg string) string {
 	switch reg {
 	case "rax", "eax":
 		return "ah"

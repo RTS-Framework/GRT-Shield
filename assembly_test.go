@@ -245,38 +245,6 @@ func TestMapRegBYTE(t *testing.T) {
 	})
 }
 
-func TestMapRegHigh8Bit(t *testing.T) {
-	t.Run("x86", func(t *testing.T) {
-		for _, item := range []*struct {
-			input  string
-			output string
-		}{
-			{"eax", "ah"},
-			{"ebx", "bh"},
-			{"ecx", "ch"},
-			{"edx", "dh"},
-		} {
-			output := mapRegHigh8Bit(item.input)
-			require.Equal(t, item.output, output)
-		}
-	})
-
-	t.Run("x64", func(t *testing.T) {
-		for _, item := range []*struct {
-			input  string
-			output string
-		}{
-			{"rax", "ah"},
-			{"rbx", "bh"},
-			{"rcx", "ch"},
-			{"rdx", "dh"},
-		} {
-			output := mapRegHigh8Bit(item.input)
-			require.Equal(t, item.output, output)
-		}
-	})
-}
-
 func TestPrintInstructions(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
 		binHex, insts, err := printInstructions(testAddX86, 32)

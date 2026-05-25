@@ -55,13 +55,11 @@ func (gen *Generator) buildRandomRegisterMap() map[string]string {
 	reg := gen.shuffleRegisterMap(registers)
 	word := gen.buildWORDRegisterMap(reg)
 	b := gen.buildBYTERegisterMap(reg)
-	high := gen.buildHigh8BitRegisterMap(reg)
 	if gen.arch == 64 {
 		maps.Copy(reg, gen.buildDWORDBitRegisterMap(reg))
 	}
 	maps.Copy(reg, word)
 	maps.Copy(reg, b)
-	maps.Copy(reg, high)
 	return reg
 }
 
@@ -76,13 +74,11 @@ func (gen *Generator) buildVolatileRegisterMap() map[string]string {
 	reg := gen.shuffleRegisterMap(registers)
 	word := gen.buildWORDRegisterMap(reg)
 	b := gen.buildBYTERegisterMap(reg)
-	high := gen.buildHigh8BitRegisterMap(reg)
 	if gen.arch == 64 {
 		maps.Copy(reg, gen.buildDWORDBitRegisterMap(reg))
 	}
 	maps.Copy(reg, word)
 	maps.Copy(reg, b)
-	maps.Copy(reg, high)
 	return reg
 }
 
@@ -97,13 +93,11 @@ func (gen *Generator) buildNonvolatileRegisterMap() map[string]string {
 	reg := gen.shuffleRegisterMap(registers)
 	word := gen.buildWORDRegisterMap(reg)
 	b := gen.buildBYTERegisterMap(reg)
-	high := gen.buildHigh8BitRegisterMap(reg)
 	if gen.arch == 64 {
 		maps.Copy(reg, gen.buildDWORDBitRegisterMap(reg))
 	}
 	maps.Copy(reg, word)
 	maps.Copy(reg, b)
-	maps.Copy(reg, high)
 	return reg
 }
 
@@ -157,20 +151,6 @@ func (gen *Generator) buildBYTERegisterMap(regMap map[string]string) map[string]
 		b[mapRegBYTE(src)] = mapRegBYTE(dst)
 	}
 	return b
-}
-
-// build register map about high byte
-func (gen *Generator) buildHigh8BitRegisterMap(regMap map[string]string) map[string]string {
-	high := make(map[string]string, len(regMap))
-	for src, dst := range regMap {
-		s := mapRegHigh8Bit(src)
-		d := mapRegHigh8Bit(dst)
-		if s == "" || d == "" {
-			continue
-		}
-		high[s] = d
-	}
-	return high
 }
 
 // map r8 -> r8d, rax -> eax
@@ -231,22 +211,6 @@ func mapRegBYTE(reg string) string {
 		return "bpl"
 	default:
 		panic(fmt.Sprintf("invalid register %s", reg))
-	}
-}
-
-// map rax -> ah, ebx -> bh
-func mapRegHigh8Bit(reg string) string {
-	switch reg {
-	case "rax", "eax":
-		return "ah"
-	case "rbx", "ebx":
-		return "bh"
-	case "rcx", "ecx":
-		return "ch"
-	case "rdx", "edx":
-		return "dh"
-	default:
-		return ""
 	}
 }
 

@@ -53,11 +53,10 @@ func (gen *Generator) buildRandomRegisterMap() map[string]string {
 		registers = registerX64
 	}
 	reg := gen.shuffleRegisterMap(registers)
+	dword := gen.buildDWORDBitRegisterMap(reg)
 	word := gen.buildWORDRegisterMap(reg)
 	b := gen.buildBYTERegisterMap(reg)
-	if gen.arch == 64 {
-		maps.Copy(reg, gen.buildDWORDBitRegisterMap(reg))
-	}
+	maps.Copy(reg, dword)
 	maps.Copy(reg, word)
 	maps.Copy(reg, b)
 	return reg
@@ -72,11 +71,10 @@ func (gen *Generator) buildVolatileRegisterMap() map[string]string {
 		registers = regVolatileX64
 	}
 	reg := gen.shuffleRegisterMap(registers)
+	dword := gen.buildDWORDBitRegisterMap(reg)
 	word := gen.buildWORDRegisterMap(reg)
 	b := gen.buildBYTERegisterMap(reg)
-	if gen.arch == 64 {
-		maps.Copy(reg, gen.buildDWORDBitRegisterMap(reg))
-	}
+	maps.Copy(reg, dword)
 	maps.Copy(reg, word)
 	maps.Copy(reg, b)
 	return reg
@@ -91,11 +89,10 @@ func (gen *Generator) buildNonvolatileRegisterMap() map[string]string {
 		registers = regNonvolatileX64
 	}
 	reg := gen.shuffleRegisterMap(registers)
+	dword := gen.buildDWORDBitRegisterMap(reg)
 	word := gen.buildWORDRegisterMap(reg)
 	b := gen.buildBYTERegisterMap(reg)
-	if gen.arch == 64 {
-		maps.Copy(reg, gen.buildDWORDBitRegisterMap(reg))
-	}
+	maps.Copy(reg, dword)
 	maps.Copy(reg, word)
 	maps.Copy(reg, b)
 	return reg
@@ -155,6 +152,9 @@ func (gen *Generator) buildBYTERegisterMap(regMap map[string]string) map[string]
 
 // map r8 -> r8d, rax -> eax
 func mapRegDWORD(reg string) string {
+	if reg[0] == 'e' {
+		return reg
+	}
 	_, err := strconv.Atoi(reg[1:])
 	if err == nil {
 		return reg + "d"

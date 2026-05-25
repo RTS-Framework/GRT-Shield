@@ -116,29 +116,46 @@ func TestBuildNonvolatileRegisterMap(t *testing.T) {
 }
 
 func TestMapRegDWORD(t *testing.T) {
-	for _, item := range []*struct {
-		input  string
-		output string
-	}{
-		{"rax", "eax"},
-		{"rbx", "ebx"},
-		{"rcx", "ecx"},
-		{"rdx", "edx"},
-		{"rdi", "edi"},
-		{"rsi", "esi"},
-		{"rsp", "esp"},
-		{"r8", "r8d"},
-		{"r9", "r9d"},
-		{"r10", "r10d"},
-		{"r11", "r11d"},
-		{"r12", "r12d"},
-		{"r13", "r13d"},
-		{"r14", "r14d"},
-		{"r15", "r15d"},
-	} {
-		output := mapRegDWORD(item.input)
-		require.Equal(t, item.output, output)
-	}
+	t.Run("x86", func(t *testing.T) {
+		for _, item := range []string{
+			"eax",
+			"ebx",
+			"ecx",
+			"edx",
+			"edi",
+			"esi",
+			"ebp",
+		} {
+			output := mapRegDWORD(item)
+			require.Equal(t, item, output)
+		}
+	})
+
+	t.Run("x64", func(t *testing.T) {
+		for _, item := range []*struct {
+			input  string
+			output string
+		}{
+			{"rax", "eax"},
+			{"rbx", "ebx"},
+			{"rcx", "ecx"},
+			{"rdx", "edx"},
+			{"rdi", "edi"},
+			{"rsi", "esi"},
+			{"rbp", "ebp"},
+			{"r8", "r8d"},
+			{"r9", "r9d"},
+			{"r10", "r10d"},
+			{"r11", "r11d"},
+			{"r12", "r12d"},
+			{"r13", "r13d"},
+			{"r14", "r14d"},
+			{"r15", "r15d"},
+		} {
+			output := mapRegDWORD(item.input)
+			require.Equal(t, item.output, output)
+		}
+	})
 }
 
 func TestMapRegWORD(t *testing.T) {

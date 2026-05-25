@@ -52,14 +52,7 @@ func (gen *Generator) buildRandomRegisterMap() map[string]string {
 	case 64:
 		registers = registerX64
 	}
-	reg := gen.shuffleRegisterMap(registers)
-	dword := gen.buildDWORDBitRegisterMap(reg)
-	word := gen.buildWORDRegisterMap(reg)
-	b := gen.buildBYTERegisterMap(reg)
-	maps.Copy(reg, dword)
-	maps.Copy(reg, word)
-	maps.Copy(reg, b)
-	return reg
+	return gen.buildRegisterMap(registers)
 }
 
 func (gen *Generator) buildVolatileRegisterMap() map[string]string {
@@ -70,14 +63,7 @@ func (gen *Generator) buildVolatileRegisterMap() map[string]string {
 	case 64:
 		registers = regVolatileX64
 	}
-	reg := gen.shuffleRegisterMap(registers)
-	dword := gen.buildDWORDBitRegisterMap(reg)
-	word := gen.buildWORDRegisterMap(reg)
-	b := gen.buildBYTERegisterMap(reg)
-	maps.Copy(reg, dword)
-	maps.Copy(reg, word)
-	maps.Copy(reg, b)
-	return reg
+	return gen.buildRegisterMap(registers)
 }
 
 func (gen *Generator) buildNonvolatileRegisterMap() map[string]string {
@@ -88,6 +74,10 @@ func (gen *Generator) buildNonvolatileRegisterMap() map[string]string {
 	case 64:
 		registers = regNonvolatileX64
 	}
+	return gen.buildRegisterMap(registers)
+}
+
+func (gen *Generator) buildRegisterMap(registers []string) map[string]string {
 	reg := gen.shuffleRegisterMap(registers)
 	dword := gen.buildDWORDBitRegisterMap(reg)
 	word := gen.buildWORDRegisterMap(reg)

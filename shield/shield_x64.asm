@@ -146,12 +146,26 @@ method_free:
   // save structure pointer
   mov {{.RegN.rbp}}, rcx                       {{iji}}
 
+  // encrypt address of VirtualFree and ExitThread
+  xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
+  xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
+
   // adjust the page protect to PAGE_READWRITE
   mov r8, 0x04                                 {{iji}}
   call protect                                 {{iji}}
 
+  // decrypt address of VirtualFree and ExitThread
+  xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
+  xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
+
+  // destroy address of VirtualProtect
+  xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}}
+
   // erase critical memory and deploy decoy
   call decoy                                   {{iji}}
+
+  // encrypt address of ExitThread
+  xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
   // free critical memory
   mov {{.RegV.rax}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get address of VirtualFree
@@ -161,6 +175,12 @@ method_free:
   sub rsp, 0x20                                {{iji}} // reserve stack for call convention
   call {{.RegV.rax}}                           {{iji}} // call VirtualFree
   add rsp, 0x20                                {{iji}} // restore stack for call convention
+
+  // decrypt address of ExitThread
+  xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
+
+  // destroy address of VirtualFree
+  xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
 
   // exit current thread
   mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // get address of ExitThread

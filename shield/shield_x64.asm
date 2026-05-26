@@ -16,7 +16,6 @@
 //   [rbp + 7*8]  DecoySize                                [rbp + 7*8]  DecoySize
 //   [rbp + 8*8]  ShelterAddress
 //   [rbp + 9*8]  TimerHandle
-//   [rbp +10*8]  CryptoKey
 
 // step:
 //   encrypt return address                                erase return address
@@ -51,21 +50,18 @@ method_sleep:
   push {{.RegN.rbx}}                           {{iji}} // for save crypto key
   push {{.RegN.rsi}}                           {{iji}} // for save the memory page old protect
 
-  // save fields to non-volatile registers
-  mov {{.RegN.rbp}}, rcx                       {{iji}} // save structure pointer
-  mov {{.RegN.rbx}}, [{{.RegN.rbp}} + 10*8]    {{iji}} // save crypto key
+  // save structure pointer
+  mov {{.RegN.rbp}}, rcx                       {{iji}}
 
-  // prevent the fixed crypto key
-  xor {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
-  ror {{.RegN.rbx}}, {{.Less16.A}}             {{iji}}
+  // generate crypto key from registers
+  mov {{.RegN.rbx}}, rsp                       {{iji}}
   xor {{.RegN.rbx}}, rcx                       {{iji}}
+  add {{.RegN.rbx}}, rdx                       {{iji}}
+  ror {{.RegN.rbx}}, {{.Less16.A}}             {{iji}}
+  xor {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
   rol {{.RegN.rbx}}, {{.Less32.A}}             {{iji}}
   add {{.RegN.rbx}}, {{.RegV.rcx}}             {{iji}}
   ror {{.RegN.rbx}}, {{.Less16.B}}             {{iji}}
-
-  // destroy CryptoKey in the stack
-  xor {{.RegV.rdx}}, {{.RegV.rdx}}             {{iji}}
-  mov [{{.RegN.rbp}} + 10*8], {{.RegV.rdx}}    {{iji}}
 
   // encrypt return address
   mov {{.RegV.rcx}}, [rsp + 3*8]               {{iji}}
@@ -105,7 +101,7 @@ method_sleep:
 
   // encrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{iji}} // set structure pointer
-  mov {{.RegV.rdx}}, 11*8                      {{iji}} // set the buffer size
+  mov {{.RegV.rdx}}, 10*8                      {{iji}} // set the buffer size
   mov {{.RegV.rax}}, {{.RegN.rbp}}             {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
@@ -121,7 +117,7 @@ method_sleep:
 
   // decrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{iji}} // set structure pointer
-  mov {{.RegV.rdx}}, 11*8                      {{iji}} // set the buffer size
+  mov {{.RegV.rdx}}, 10*8                      {{iji}} // set the buffer size
   mov {{.RegV.rax}}, {{.RegN.rbp}}             {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 

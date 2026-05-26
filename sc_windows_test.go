@@ -1,7 +1,6 @@
 package shield
 
 import (
-	"crypto/rand"
 	"debug/pe"
 	"encoding/binary"
 	"os"
@@ -39,7 +38,6 @@ type testSleepArgs struct {
 	DecoySize           uintptr
 	ShelterAddress      uintptr
 	TimerHandle         uintptr
-	CryptoKey           uintptr
 }
 
 type testFreeArgs struct {
@@ -109,11 +107,6 @@ func testBuildSleepArgs(t *testing.T, critical, decoy, shelter []byte, sleep tim
 	)
 	require.True(t, ok == 1, err)
 
-	buf := make([]byte, 8)
-	_, err = rand.Read(buf)
-	require.NoError(t, err)
-	cryptoKey := uintptr(binary.LittleEndian.Uint64(buf))
-
 	args := &testSleepArgs{
 		Method:              methodSleep,
 		VirtualProtect:      procVirtualProtect.Addr(),
@@ -124,7 +117,6 @@ func testBuildSleepArgs(t *testing.T, critical, decoy, shelter []byte, sleep tim
 		DecoySize:           uintptr(len(decoy)),
 		ShelterAddress:      uintptr(unsafe.Pointer(&shelter[0])),
 		TimerHandle:         hTimer,
-		CryptoKey:           cryptoKey,
 	}
 	return args
 }

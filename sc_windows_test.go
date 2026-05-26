@@ -54,23 +54,34 @@ type testFreeArgs struct {
 func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	critical := make([]byte, 8192)
 	copy(critical, "runtime instruction")
+	var decoy []byte
+	switch runtime.GOARCH {
+	case "386":
+		decoy = testAddX86
+	case "amd64":
+		decoy = testAddX64
+	default:
+		panic("unsupported architecture")
+	}
 	shelter := make([]byte, 16384)
 
 	shieldAddr := testDeployShield(t, shield)
 	criticalAddr := uintptr(unsafe.Pointer(&critical[0]))
+	decoyAddr := uintptr(unsafe.Pointer(&decoy[0]))
 	shelterAddr := uintptr(unsafe.Pointer(&shelter[0]))
 	t.Logf("shield address:   0x%X\n", shieldAddr)
 	t.Logf("critical address: 0x%X\n", criticalAddr)
+	t.Logf("decoy address:    0x%X\n", decoyAddr)
 	t.Logf("shelter address:  0x%X\n", shelterAddr)
 
 	now := time.Now()
 
-	args := testBuildSleepArgs(t, critical, shelter, sleep)
+	args := testBuildSleepArgs(t, critical, decoy, shelter, sleep)
 	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
 	err := windows.CloseHandle(windows.Handle(args.TimerHandle))
 	require.NoError(t, err)
 
-	args = testBuildSleepArgs(t, critical, shelter, sleep)
+	args = testBuildSleepArgs(t, critical, decoy, shelter, sleep)
 	args.VirtualProtect = 0 // not adjust critical page protect
 	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
 	err = windows.CloseHandle(windows.Handle(args.TimerHandle))
@@ -85,7 +96,7 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	runtime.KeepAlive(shelter)
 }
 
-func testBuildSleepArgs(t *testing.T, critical, shelter []byte, sleep time.Duration) *testSleepArgs {
+func testBuildSleepArgs(t *testing.T, critical, decoy, shelter []byte, sleep time.Duration) *testSleepArgs {
 	hTimer, _, err := procCreateWaitableTimerA.Call(0, 0, 0)
 	if hTimer == 0 {
 		require.NoError(t, err)
@@ -107,6 +118,8 @@ func testBuildSleepArgs(t *testing.T, critical, shelter []byte, sleep time.Durat
 		WaitForSingleObject: procWaitForSingleObject.Addr(),
 		CriticalAddress:     uintptr(unsafe.Pointer(&critical[0])),
 		CriticalSize:        uintptr(len(critical)),
+		DecoyAddress:        uintptr(unsafe.Pointer(&decoy[0])),
+		DecoySize:           uintptr(len(decoy)),
 		ShelterAddress:      uintptr(unsafe.Pointer(&shelter[0])),
 		TimerHandle:         hTimer,
 		CryptoKey:           cryptoKey,
@@ -114,13 +127,15 @@ func testBuildSleepArgs(t *testing.T, critical, shelter []byte, sleep time.Durat
 	return args
 }
 
-func testBuildFreeArgs(critical []byte) *testFreeArgs {
+func testBuildFreeArgs(critical, decoy []byte) *testFreeArgs {
 	args := &testFreeArgs{
 		Method:          methodFree,
 		VirtualFree:     procVirtualFree.Addr(),
 		ExitThread:      procExitThread.Addr(),
 		CriticalAddress: uintptr(unsafe.Pointer(&critical[0])),
 		CriticalSize:    uintptr(len(critical)),
+		DecoyAddress:    uintptr(unsafe.Pointer(&decoy[0])),
+		DecoySize:       uintptr(len(decoy)),
 	}
 	return args
 }

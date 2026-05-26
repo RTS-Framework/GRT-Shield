@@ -32,6 +32,7 @@ type testSleepArgs struct {
 	Method              uintptr
 	VirtualProtect      uintptr
 	WaitForSingleObject uintptr
+	Reserved            uintptr
 	CriticalAddress     uintptr
 	CriticalSize        uintptr
 	DecoyAddress        uintptr
@@ -43,6 +44,7 @@ type testSleepArgs struct {
 
 type testFreeArgs struct {
 	Method          uintptr
+	VirtualProtect  uintptr
 	VirtualFree     uintptr
 	ExitThread      uintptr
 	CriticalAddress uintptr
@@ -130,6 +132,7 @@ func testBuildSleepArgs(t *testing.T, critical, decoy, shelter []byte, sleep tim
 func testBuildFreeArgs(critical, decoy []byte) *testFreeArgs {
 	args := &testFreeArgs{
 		Method:          methodFree,
+		VirtualProtect:  procVirtualProtect.Addr(),
 		VirtualFree:     procVirtualFree.Addr(),
 		ExitThread:      procExitThread.Addr(),
 		CriticalAddress: uintptr(unsafe.Pointer(&critical[0])),

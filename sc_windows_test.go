@@ -93,7 +93,7 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 
 	// common adjust critical
 	var old uint32
-	err := windows.VirtualProtect(criticalAddr, 64, windows.PAGE_READONLY, &old)
+	err := windows.VirtualProtect(criticalAddr, uintptr(len(critical)), windows.PAGE_READONLY, &old)
 	require.NoError(t, err)
 
 	wg.Add(1)
@@ -106,7 +106,7 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 
 	wg.Wait()
 
-	err = windows.VirtualProtect(criticalAddr, 64, old, &old)
+	err = windows.VirtualProtect(criticalAddr, uintptr(len(critical)), old, &old)
 	require.NoError(t, err)
 
 	// not adjust critical page protect

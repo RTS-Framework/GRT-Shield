@@ -173,13 +173,14 @@ method_free:
   // encrypt address of ExitThread
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
-  // free critical memory
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 2*8]     {{iji}} // get address of VirtualFree
-  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // lpAddress
-  xor {{.RegV.rdx}}, {{.RegV.rdx}}             {{iji}} // dwSize = 0
-  mov {{.RegV.r8}}, 0x4000                     {{iji}} // dwFreeType = MEM_RELEASE
+  // release critical memory
+  mov rax, [{{.RegN.rbp}} + 2*8]               {{iji}} // get address of VirtualFree
+  mov rcx, [{{.RegN.rbp}} + 4*8]               {{iji}} // lpAddress
+  xor rdx, rdx                                 {{iji}} // dwSize = 0
+  mov r9, 0x4000                               {{iji}} // dwFreeType = MEM_RELEASE
+  mov r8, r9                                   {{iji}} // prevent feature
   sub rsp, 0x20                                {{iji}} // reserve stack for call convention
-  call {{.RegV.rax}}                           {{iji}} // call VirtualFree
+  call rax                                     {{iji}} // call VirtualFree
   add rsp, 0x20                                {{iji}} // restore stack for call convention
 
   // decrypt address of ExitThread
@@ -189,10 +190,10 @@ method_free:
   or [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}      {{iji}}
 
   // exit current thread
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // get address of ExitThread
-  xor {{.RegV.rcx}}, {{.RegV.rcx}}             {{iji}} // dwExitCode = 0
+  mov rax, [{{.RegN.rbp}} + 3*8]               {{iji}} // get address of ExitThread
+  xor rcx, rcx                                 {{iji}} // dwExitCode = 0
   sub rsp, 0x20                                {{iji}} // reserve stack for call convention
-  call {{.RegV.rax}}                           {{iji}} // call ExitThread
+  call rax                                     {{iji}} // call ExitThread
   add rsp, 0x20                                {{iji}} // restore stack for call convention
   ret                                          {{iji}} // unreachable
 

@@ -72,7 +72,7 @@ method_sleep:
   xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
 
   // adjust the page protect to PAGE_READWRITE
-  mov r8, 0x04                                 {{iji}}
+  mov {{.RegV.rcx}}, 0x04                      {{iji}}
   call protect                                 {{iji}}
 
   // decrypt address of WaitForSingleObject
@@ -122,7 +122,7 @@ method_sleep:
   call xor_buf                                 {{iji}}
 
   // recover the page protect to old protect
-  mov r8, {{.RegN.rsi}}                        {{iji}}
+  mov {{.RegV.rcx}}, {{.RegN.rsi}}             {{iji}}
   call protect                                 {{iji}}
 
   // decrypt return address
@@ -157,7 +157,7 @@ method_free:
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
   // adjust the page protect to PAGE_READWRITE
-  mov r8, 0x04                                 {{iji}}
+  mov {{.RegV.rcx}}, 0x04                      {{iji}}
   call protect                                 {{iji}}
 
   // decrypt address of VirtualFree and ExitThread
@@ -230,8 +230,10 @@ protect:
   push {{.RegN.rdi}}                           {{iji}} // save non-volatile register
   mov {{.RegN.rdi}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get address of VirtualProtect
   xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}} // encrypt address of VirtualProtect
+  push {{.RegV.rcx}}                           {{iji}} // prevent overwrite by next
   mov rcx, [{{.RegN.rbp}} + 4*8]               {{iji}} // set address of critical
   mov rdx, [{{.RegN.rbp}} + 5*8]               {{iji}} // set size of critical
+  pop r8                                       {{iji}} // set new protect
   sub rsp, 0x08                                {{iji}} // for save old protect
   mov r9,  rsp                                 {{iji}} // lpflOldProtect
   sub rsp, 0x28                                {{iji}} // reserve stack for call convention

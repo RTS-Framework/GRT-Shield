@@ -1,11 +1,13 @@
 package shield
 
 import (
+	"bytes"
 	"debug/pe"
 	"encoding/binary"
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -74,19 +76,52 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	t.Logf("decoy address:    0x%X\n", decoyAddr)
 	t.Logf("shelter address:  0x%X\n", shelterAddr)
 
+	wg := sync.WaitGroup{}
+	checker := func() {
+		defer wg.Done()
+		for i := 0; i < 200; i++ {
+			hasDecoy := bytes.Equal(critical[:len(decoy)], decoy)
+			if hasDecoy {
+				return
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		t.Fatal("decoy is not deploy")
+	}
+
 	now := time.Now()
 
-	args := testBuildSleepArgs(t, critical, decoy, shelter, sleep)
-	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
-	err := windows.CloseHandle(windows.Handle(args.TimerHandle))
+	// common adjust critical
+	var old uint32
+	err := windows.VirtualProtect(criticalAddr, 64, windows.PAGE_READONLY, &old)
 	require.NoError(t, err)
 
-	args = testBuildSleepArgs(t, critical, decoy, shelter, sleep)
-	args.VirtualProtect = 0 // not adjust critical page protect
+	wg.Add(1)
+	go checker()
+
+	args := testBuildSleepArgs(t, critical, decoy, shelter, sleep)
 	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
 	err = windows.CloseHandle(windows.Handle(args.TimerHandle))
 	require.NoError(t, err)
 
+	wg.Wait()
+
+	err = windows.VirtualProtect(criticalAddr, 64, old, &old)
+	require.NoError(t, err)
+
+	// not adjust critical page protect
+	wg.Add(1)
+	go checker()
+
+	args = testBuildSleepArgs(t, critical, decoy, shelter, sleep)
+	args.VirtualProtect = 0
+	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
+	err = windows.CloseHandle(windows.Handle(args.TimerHandle))
+	require.NoError(t, err)
+
+	wg.Wait()
+
+	// total check
 	require.Greater(t, time.Since(now), sleep*2)
 	require.True(t, strings.HasPrefix(string(critical), "runtime instruction"))
 	require.NotZero(t, binary.LittleEndian.Uint64(shelter[:8]))

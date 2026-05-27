@@ -54,14 +54,7 @@ method_sleep:
   mov {{.RegN.rbp}}, rcx                       {{iji}}
 
   // generate crypto key from registers
-  mov {{.RegN.rbx}}, rsp                       {{iji}}
-  xor {{.RegN.rbx}}, rcx                       {{iji}}
-  add {{.RegN.rbx}}, rdx                       {{iji}}
-  ror {{.RegN.rbx}}, {{.Less16.A}}             {{iji}}
-  xor {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
-  rol {{.RegN.rbx}}, {{.Less32.A}}             {{iji}}
-  add {{.RegN.rbx}}, {{.RegV.rcx}}             {{iji}}
-  ror {{.RegN.rbx}}, {{.Less16.B}}             {{iji}}
+  call gen_key                                 {{iji}}
 
   // encrypt return address
   mov {{.RegV.rcx}}, [rsp + 3*8]               {{iji}}
@@ -143,8 +136,16 @@ method_sleep:
   ret                                          {{iji}}
 
 method_free:
+  // save context and ensure stack is 16 bytes alignd
+  push {{.RegN.rbp}}                           {{iji}} // for save structure pointer
+  push {{.RegN.rbx}}                           {{iji}} // for save crypto key
+  push {{.RegN.rsi}}                           {{iji}} // for save the memory page old protect
+
   // save structure pointer
   mov {{.RegN.rbp}}, rcx                       {{iji}}
+
+  // generate crypto key from registers
+  call gen_key                                 {{iji}}
 
   // encrypt address of VirtualFree and ExitThread
   xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
@@ -159,7 +160,7 @@ method_free:
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
   // destroy address of VirtualProtect
-  xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}}
+  and [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}}
 
   // erase critical memory and deploy decoy
   call decoy                                   {{iji}}
@@ -180,7 +181,7 @@ method_free:
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
   // destroy address of VirtualFree
-  xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
+  and [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
 
   // exit current thread
   mov {{.RegV.rax}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // get address of ExitThread
@@ -189,6 +190,20 @@ method_free:
   call {{.RegV.rax}}                           {{iji}} // call ExitThread
   add rsp, 0x20                                {{iji}} // restore stack for call convention
   ret                                          {{iji}} // unreachable
+
+gen_key:
+  pop {{.RegV.rax}}                            {{iji}}
+  push {{.RegV.rax}}                           {{iji}}
+  mov {{.RegN.rbx}}, rsp                       {{iji}}
+  add {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
+  xor {{.RegN.rbx}}, rcx                       {{iji}}
+  add {{.RegN.rbx}}, rdx                       {{iji}}
+  ror {{.RegN.rbx}}, {{.Less16.A}}             {{iji}}
+  xor {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
+  rol {{.RegN.rbx}}, {{.Less32.A}}             {{iji}}
+  add {{.RegN.rbx}}, {{.RegV.rcx}}             {{iji}}
+  ror {{.RegN.rbx}}, {{.Less16.B}}             {{iji}}
+  ret                                          {{iji}}
 
 xor_buf:
   shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count
@@ -200,6 +215,30 @@ xor_buf:
   add {{.RegV.rax}}, 8                         {{iji}} // add destination address
   dec {{.RegV.rdx}}                            {{iji}} // update loop count
   jnz loop_xor                                 {{iji}} // check need decrypt again
+  ret                                          {{iji}}
+
+protect:
+  // check VirtualProtect is zero
+  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 1*8]     {{iji}}
+  test {{.RegV.rax}}, {{.RegV.rax}}            {{iji}}
+  jz skip_protect                              {{iji}}
+  xor {{.RegV.rax}}, {{.RegV.rax}}             {{iji}} // clear register about VirtualProtect
+  push {{.RegN.rdi}}                           {{iji}} // save non-volatile register
+  mov {{.RegN.rdi}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get address of VirtualProtect
+  xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}} // encrypt address of VirtualProtect
+  mov rcx, [{{.RegN.rbp}} + 4*8]               {{iji}} // set address of critical
+  mov rdx, [{{.RegN.rbp}} + 5*8]               {{iji}} // set size of critical
+  sub rsp, 0x08                                {{iji}} // for save old protect
+  mov r9,  rsp                                 {{iji}} // lpflOldProtect
+  sub rsp, 0x28                                {{iji}} // reserve stack for call convention
+  call {{.RegN.rdi}}                           {{iji}} // call VirtualProtect
+  add rsp, 0x28                                {{iji}} // restore stack for call convention
+  mov {{.RegN.rsi}}, [rsp]                     {{iji}} // save old protect
+  add rsp, 0x08                                {{iji}} // restore stack for old protect
+  xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}} // decrypt address of VirtualProtect
+  pop {{.RegN.rdi}}                            {{iji}} // restore non-volatile register
+
+ skip_protect:
   ret                                          {{iji}}
 
 decoy:
@@ -229,28 +268,4 @@ decoy:
   jnz loop_decoy                               {{iji}} // check need fill next
 
  skip_decoy:
-  ret                                          {{iji}}
-
-protect:
-  // check VirtualProtect is zero
-  mov {{.RegV.rax}}, [{{.RegN.rbp}} + 1*8]     {{iji}}
-  test {{.RegV.rax}}, {{.RegV.rax}}            {{iji}}
-  jnz next_vp                                  {{iji}}
-  ret                                          {{iji}}
- next_vp:
-  xor {{.RegV.rax}}, {{.RegV.rax}}             {{iji}} // clear register about VirtualProtect
-  push {{.RegN.rdi}}                           {{iji}} // save non-volatile register
-  mov {{.RegN.rdi}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get address of VirtualProtect
-  xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}} // encrypt address of VirtualProtect
-  mov rcx, [{{.RegN.rbp}} + 4*8]               {{iji}} // set address of critical
-  mov rdx, [{{.RegN.rbp}} + 5*8]               {{iji}} // set size of critical
-  sub rsp, 0x08                                {{iji}} // for save old protect
-  mov r9,  rsp                                 {{iji}} // lpflOldProtect
-  sub rsp, 0x28                                {{iji}} // reserve stack for call convention
-  call {{.RegN.rdi}}                           {{iji}} // call VirtualProtect
-  add rsp, 0x28                                {{iji}} // restore stack for call convention
-  mov {{.RegN.rsi}}, [rsp]                     {{iji}} // save old protect
-  add rsp, 0x08                                {{iji}} // restore stack for old protect
-  xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}} // decrypt address of VirtualProtect
-  pop {{.RegN.rdi}}                            {{iji}} // restore non-volatile register
   ret                                          {{iji}}

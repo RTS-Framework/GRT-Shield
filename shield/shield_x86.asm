@@ -2,25 +2,28 @@
 
 // notice:
 //   if VirtualProtect is zero, skip adjust page protect
-//   the CriticalSize must be 4 bytes aligned
+//   if DecoyAddress or DecoySize is zero, skip fill decoy
+//   CriticalSize must be 4 bytes aligned
 
 // struct:
 //   ======== Sleep ========                               ======== Free ========
 //   [ebp + 0*4]  Method                                   [ebp + 0*4]  Method
-//   [ebp + 1*4]  VirtualProtect                           [ebp + 1*4]  VirtualFree
-//   [ebp + 2*4]  WaitForSingleObject                      [ebp + 2*4]  ExitThread
-//   [ebp + 3*4]  CriticalAddress                          [ebp + 3*4]  Address
-//   [ebp + 4*4]  CriticalSize                             [ebp + 4*4]  Size
-//   [ebp + 5*4]  ShelterAddress
-//   [ebp + 6*4]  TimerHandle
-//   [ebp + 7*4]  CryptoKey
+//   [ebp + 1*4]  VirtualProtect                           [ebp + 1*4]  VirtualProtect
+//   [ebp + 2*4]  WaitForSingleObject                      [ebp + 2*4]  VirtualFree
+//   [ebp + 3*4]  Reserved                                 [ebp + 3*4]  ExitThread
+//   [ebp + 4*4]  CriticalAddress                          [ebp + 4*4]  CriticalAddress
+//   [ebp + 5*4]  CriticalSize                             [ebp + 5*4]  CriticalSize
+//   [ebp + 6*4]  DecoyAddress                             [ebp + 6*4]  DecoyAddress
+//   [ebp + 7*4]  DecoySize                                [ebp + 7*4]  DecoySize
+//   [ebp + 8*4]  ShelterAddress
+//   [ebp + 9*4]  TimerHandle
 
 // step:
 //   encrypt return address                                erase return address
-//   encrypt critical instructions to shelter              erase critical memory
-//   adjust the critical memory page protect               free critical memory page
-//   erase the critical instructions                       exit thread
-//   encrypt stack about structure
+//   encrypt critical instructions to shelter              adjust the critical memory page protect
+//   adjust the critical memory page protect               fill critical memory with decoy
+//   fill critical memory with decoy                       free critical memory page
+//   encrypt stack about structure                         exit current thread
 //   call WaitForSingleObject
 //   decrypt stack about structure
 //   recover the critical instructions from shelter
@@ -174,7 +177,7 @@ method_free:
   pop {{.RegV.eax}}                            {{iji}} // restore ExitThread address
   push 0                                       {{iji}} // dwExitCode = 0
   call {{.RegV.eax}}                           {{iji}} // call ExitThread
-  int3                                         {{iji}} // unreachable
+  ret 4                                        {{iji}} // unreachable
 
 xor_buf:
   push {{.RegN.esi}}                           {{iji}} // save register

@@ -211,3 +211,37 @@ protect:
   add esp, 0x04                                {{iji}} // restore stack for old protect
   xor [{{.RegN.ebp}} + 1*4], {{.RegN.ebx}}     {{iji}} // decrypt address of VirtualProtect
   ret 4                                        {{iji}} // return and release stack
+
+decoy:
+  // erase critical memory
+  mov {{.RegV.ecx}}, [{{.RegN.rbp}} + 4*4]     {{iji}} // set critical address
+  mov {{.RegV.edx}}, [{{.RegN.rbp}} + 5*4]     {{iji}} // set critical size
+  shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
+  xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // calculate zero value
+ loop_erase:
+  mov [{{.RegV.ecx}}], {{.RegV.eax}}           {{iji}} // erase data
+  add {{.RegV.ecx}}, 4                         {{iji}} // add critical address
+  dec {{.RegV.edx}}                            {{iji}} // update loop count
+  jnz loop_erase                               {{iji}} // check need erase next
+
+  // fill critical memory with decoy
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 6*4]     {{iji}} // get decoy address
+  test {{.RegV.ecx}}, {{.RegV.ecx}}            {{iji}} // check decoy address is zero
+  jz skip_decoy                                {{iji}} // check need skip fill
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 7*4]     {{iji}} // set decoy size (loop count)
+  test {{.RegV.edx}}, {{.RegV.edx}}            {{iji}} // check decoy size is zero
+  jz skip_decoy                                {{iji}} // check need skip fill
+  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set critical address
+
+  push {{.RegN.ebx}}                           {{iji}} // save ebx
+ loop_decoy:
+  mov {{.RegN.bl}}, byte ptr [{{.RegV.ecx}}]   {{iji}} // load one byte from decoy
+  mov [{{.RegV.eax}}], {{.RegN.bl}}            {{iji}} // write one byte to critical
+  inc {{.RegV.ecx}}                            {{iji}} // update decoy address
+  inc {{.RegV.eax}}                            {{iji}} // update critical address
+  dec {{.RegV.edx}}                            {{iji}} // update loop count
+  jnz loop_decoy                               {{iji}} // check need fill next
+  pop {{.RegN.ebx}}                            {{iji}} // restore ebx
+
+ skip_decoy:
+  ret                                          {{iji}}

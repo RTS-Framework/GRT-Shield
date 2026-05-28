@@ -175,6 +175,20 @@ xor_buf:
   pop {{.RegN.esi}}                            {{iji}} // restore register
   ret                                          {{iji}}
 
+gen_key:
+  pop {{.RegV.eax}}                            {{iji}}
+  push {{.RegV.eax}}                           {{iji}}
+  mov {{.RegN.ebx}}, esp                       {{iji}}
+  add {{.RegN.ebx}}, {{.Reg.eax}}              {{iji}}
+  xor {{.RegN.ebx}}, {{.Reg.ecx}}              {{iji}}
+  add {{.RegN.ebx}}, {{.Reg.edx}}              {{iji}}
+  ror {{.RegN.ebx}}, {{.Less16.A}}             {{iji}}
+  xor {{.RegN.ebx}}, {{.Reg.edi}}              {{iji}}
+  rol {{.RegN.ebx}}, {{.Less32.A}}             {{iji}}
+  add {{.RegN.ebx}}, {{.Reg.esi}}              {{iji}}
+  ror {{.RegN.ebx}}, {{.Less16.B}}             {{iji}}
+  ret                                          {{iji}}
+
 protect:
   // check VirtualProtect is zero
   mov {{.RegV.eax}}, [{{.RegN.ebp}} + 1*4]     {{iji}}

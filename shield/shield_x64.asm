@@ -160,12 +160,13 @@ method_free:
   mov {{.RegV.rcx}}, 0x04                      {{iji}}
   call protect                                 {{iji}}
 
+  // destroy address of VirtualProtect
+  mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 1*8]     {{iji}}
+  or [{{.RegN.rbp}} + 1*8], {{.RegV.rcx}}      {{iji}}
+
   // decrypt address of VirtualFree and ExitThread
   xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
-
-  // destroy address of VirtualProtect
-  or [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}      {{iji}}
 
   // erase critical memory and deploy decoy
   call decoy                                   {{iji}}
@@ -175,6 +176,7 @@ method_free:
 
   // release critical memory
   mov rax, [{{.RegN.rbp}} + 2*8]               {{iji}} // get address of VirtualFree
+  xor [{{.RegN.rbp}} + 2*8], rax               {{iji}} // destroy address of VirtualFree
   mov rcx, [{{.RegN.rbp}} + 4*8]               {{iji}} // lpAddress
   xor rdx, rdx                                 {{iji}} // dwSize = 0
   mov r8, 0x4000                               {{iji}} // dwFreeType = MEM_RELEASE
@@ -185,11 +187,9 @@ method_free:
   // decrypt address of ExitThread
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
-  // destroy address of VirtualFree
-  or [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}      {{iji}}
-
   // exit current thread
   mov rax, [{{.RegN.rbp}} + 3*8]               {{iji}} // get address of ExitThread
+  xor [{{.RegN.rbp}} + 3*8], rax               {{iji}} // destroy address of ExitThread
   xor rcx, rcx                                 {{iji}} // dwExitCode = 0
   sub rsp, 0x20                                {{iji}} // reserve stack for call convention
   call rax                                     {{iji}} // call ExitThread

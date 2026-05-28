@@ -58,9 +58,10 @@ type junkCodeCtx struct {
 	DWORD map[string]int32
 	QWORD map[string]int64
 
-	// for random immediate data with [0, 32) and [0, 64)
-	Less32 map[string]int
-	Less64 map[string]int
+	// for random immediate data
+	Less16 map[string]int // [1, 15]
+	Less32 map[string]int // [1, 31]
+	Less64 map[string]int // [1, 63]
 }
 
 func (gen *Generator) insertJunkInst() string {
@@ -171,6 +172,7 @@ func (gen *Generator) buildJunkCode(src string) (string, error) {
 	WORD := make(map[string]int16)
 	DWORD := make(map[string]int32)
 	QWORD := make(map[string]int64)
+	Less16 := make(map[string]int)
 	Less32 := make(map[string]int)
 	Less64 := make(map[string]int)
 	for i := 'A'; i <= 'Z'; i++ {
@@ -179,8 +181,9 @@ func (gen *Generator) buildJunkCode(src string) (string, error) {
 		i16 := int16(gen.rand.Int31() % 32768)
 		i32 := gen.rand.Int31()
 		i64 := gen.rand.Int63()
-		l32 := gen.rand.Intn(32)
-		l64 := gen.rand.Intn(64)
+		l16 := 1 + gen.rand.Intn(15)
+		l32 := 1 + gen.rand.Intn(31)
+		l64 := 1 + gen.rand.Intn(63)
 		switches[string(i+0x00)] = b
 		switches[string(i+0x20)] = b
 		BYTE[string(i+0x00)] = i8
@@ -191,6 +194,8 @@ func (gen *Generator) buildJunkCode(src string) (string, error) {
 		DWORD[string(i+0x20)] = i32
 		QWORD[string(i+0x00)] = i64
 		QWORD[string(i+0x20)] = i64
+		Less16[string(i+0x00)] = l16
+		Less16[string(i+0x20)] = l16
 		Less32[string(i+0x00)] = l32
 		Less32[string(i+0x20)] = l32
 		Less64[string(i+0x00)] = l64
@@ -203,6 +208,7 @@ func (gen *Generator) buildJunkCode(src string) (string, error) {
 		WORD:   WORD,
 		DWORD:  DWORD,
 		QWORD:  QWORD,
+		Less16: Less16,
 		Less32: Less32,
 		Less64: Less64,
 	}

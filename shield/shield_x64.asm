@@ -177,8 +177,7 @@ method_free:
   mov rax, [{{.RegN.rbp}} + 2*8]               {{iji}} // get address of VirtualFree
   mov rcx, [{{.RegN.rbp}} + 4*8]               {{iji}} // lpAddress
   xor rdx, rdx                                 {{iji}} // dwSize = 0
-  mov r9, 0x4000                               {{iji}} // dwFreeType = MEM_RELEASE
-  mov r8, r9                                   {{iji}} // prevent feature
+  mov r8, 0x4000                               {{iji}} // dwFreeType = MEM_RELEASE
   sub rsp, 0x20                                {{iji}} // reserve stack for call convention
   call rax                                     {{iji}} // call VirtualFree
   add rsp, 0x20                                {{iji}} // restore stack for call convention
@@ -253,9 +252,9 @@ decoy:
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical address
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // set critical size
   shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count
-  xor {{.RegV.r9}}, {{.RegV.r9}}               {{iji}} // calculate zero value
+  xor {{.RegV.rax}}, {{.RegV.rax}}             {{iji}} // calculate zero value
  loop_erase:
-  mov [{{.RegV.rcx}}], {{.RegV.r9}}            {{iji}} // erase data
+  mov [{{.RegV.rcx}}], {{.RegV.rax}}           {{iji}} // erase data
   add {{.RegV.rcx}}, 8                         {{iji}} // add critical address
   dec {{.RegV.rdx}}                            {{iji}} // update loop count
   jnz loop_erase                               {{iji}} // check need erase next
@@ -270,7 +269,7 @@ decoy:
   mov {{.RegV.rax}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical address
 
  loop_decoy:
-  movzx {{.RegV.r8}}, byte ptr [{{.RegV.rcx}}] {{iji}} // load one byte from decoy
+  mov {{.RegV.r8b}}, byte ptr [{{.RegV.rcx}}]  {{iji}} // load one byte from decoy
   mov [{{.RegV.rax}}], {{.RegV.r8b}}           {{iji}} // write one byte to critical
   inc {{.RegV.rcx}}                            {{iji}} // update decoy address
   inc {{.RegV.rax}}                            {{iji}} // update critical address

@@ -190,19 +190,16 @@ gen_key:
   ret                                          {{iji}}
 
 protect:
-  // check VirtualProtect is zero
-  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 1*4]     {{iji}}
-  test {{.RegV.eax}}, {{.RegV.eax}}            {{iji}}
-  jnz next_vp                                  {{iji}}
-  ret 4                                        {{iji}}
- next_vp:
+  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 1*4]     {{iji}} // get VirtualProtect address
+  test {{.RegV.eax}}, {{.RegV.eax}}            {{iji}} // check VirtualProtect address is zero
+  jz skip_protect                              {{iji}} // check need skip protect
   mov {{.RegV.eax}}, [esp+4]                   {{iji}} // read argument about new protect
   sub esp, 0x04                                {{iji}} // for save old protect
   push esp                                     {{iji}} // lpflOldProtect
   push {{.RegV.eax}}                           {{iji}} // new protect
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set size of critical
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 5*4]     {{iji}} // set size of critical
   push {{.RegV.ecx}}                           {{iji}} // push size
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set address of critical
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set address of critical
   push {{.RegV.ecx}}                           {{iji}} // push address
   mov {{.RegV.eax}}, [{{.RegN.ebp}} + 1*4]     {{iji}} // get address of VirtualProtect
   xor [{{.RegN.ebp}} + 1*4], {{.RegN.ebx}}     {{iji}} // encrypt address of VirtualProtect
@@ -210,12 +207,14 @@ protect:
   mov {{.RegN.esi}}, [esp]                     {{iji}} // save old protect
   add esp, 0x04                                {{iji}} // restore stack for old protect
   xor [{{.RegN.ebp}} + 1*4], {{.RegN.ebx}}     {{iji}} // decrypt address of VirtualProtect
+
+ skip_protect:
   ret 4                                        {{iji}} // return and release stack
 
 decoy:
   // erase critical memory
-  mov {{.RegV.ecx}}, [{{.RegN.rbp}} + 4*4]     {{iji}} // set critical address
-  mov {{.RegV.edx}}, [{{.RegN.rbp}} + 5*4]     {{iji}} // set critical size
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set critical address
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 5*4]     {{iji}} // set critical size
   shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
   xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // calculate zero value
  loop_erase:

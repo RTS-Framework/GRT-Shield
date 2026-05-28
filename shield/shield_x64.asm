@@ -201,13 +201,13 @@ gen_key:
   pop {{.RegV.rax}}                            {{iji}}
   push {{.RegV.rax}}                           {{iji}}
   mov {{.RegN.rbx}}, rsp                       {{iji}}
-  add {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
+  add {{.RegN.rbx}}, {{.Reg.rax}}              {{iji}}
   xor {{.RegN.rbx}}, rcx                       {{iji}}
-  add {{.RegN.rbx}}, rdx                       {{iji}}
+  add {{.RegN.rbx}}, {{.Reg.rdx}}              {{iji}}
   ror {{.RegN.rbx}}, {{.Less16.A}}             {{iji}}
-  xor {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
+  xor {{.RegN.rbx}}, {{.Reg.rdi}}              {{iji}}
   rol {{.RegN.rbx}}, {{.Less32.A}}             {{iji}}
-  add {{.RegN.rbx}}, {{.RegV.rcx}}             {{iji}}
+  add {{.RegN.rbx}}, {{.Reg.rsi}}              {{iji}}
   ror {{.RegN.rbx}}, {{.Less16.B}}             {{iji}}
   ret                                          {{iji}}
 

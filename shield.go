@@ -27,12 +27,14 @@ var (
 
 type shieldCtx struct {
 	// for replace registers
+	Reg  map[string]string
 	RegV map[string]string
 	RegN map[string]string
 
-	// for random immediate data with [1, 15] and [1, 31]
-	Less16 map[string]int
-	Less32 map[string]int
+	// for random immediate data
+	Less16 map[string]int // [1, 15]
+	Less32 map[string]int // [1, 31]
+	Less64 map[string]int // [1, 63]
 }
 
 func (gen *Generator) buildShield(shield string) (output string, err error) {
@@ -59,15 +61,25 @@ func (gen *Generator) buildShield(shield string) (output string, err error) {
 	}
 	Less16 := make(map[string]int)
 	Less32 := make(map[string]int)
+	Less64 := make(map[string]int)
 	for i := 'A'; i <= 'Z'; i++ {
-		Less16[string(i)] = 1 + gen.rand.Intn(15)
-		Less32[string(i)] = 1 + gen.rand.Intn(31)
+		less16 := 1 + gen.rand.Intn(15)
+		less32 := 1 + gen.rand.Intn(31)
+		less64 := 1 + gen.rand.Intn(63)
+		Less16[string(i+0x00)] = less16
+		Less16[string(i+0x20)] = less16
+		Less32[string(i+0x00)] = less32
+		Less32[string(i+0x20)] = less32
+		Less64[string(i+0x00)] = less64
+		Less64[string(i+0x20)] = less64
 	}
 	ctx := &shieldCtx{
+		Reg:    gen.buildRandomRegisterMap(),
 		RegV:   gen.buildVolatileRegisterMap(),
 		RegN:   gen.buildNonvolatileRegisterMap(),
 		Less16: Less16,
 		Less32: Less32,
+		Less64: Less64,
 	}
 	buf := bytes.NewBuffer(make([]byte, 0, 512))
 	err = tpl.Execute(buf, ctx)

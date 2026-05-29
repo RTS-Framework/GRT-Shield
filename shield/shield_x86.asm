@@ -132,48 +132,7 @@ method_sleep:
   ret 4                                        {{iji}}
 
 method_free:
-  mov {{.RegN.ebp}}, [esp + 4]                 {{iji}} // save structure pointer
-  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get address of ExitThread
-  push {{.RegV.eax}}                           {{iji}} // save ExitThread address on stack
-
-  // erase the critical memory
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // set address
-  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set size
-  shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
-  xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // zero value
- loop_erase_free:
-  mov [{{.RegV.ecx}}], {{.RegV.eax}}           {{iji}} // erase data
-  add {{.RegV.ecx}}, 4                         {{iji}} // next field
-  dec {{.RegV.edx}}                            {{iji}} // update loop count
-  jnz loop_erase_free                          {{iji}} // check need erase next
-
-  // call VirtualFree
-  push 0x4000                                  {{iji}} // dwFreeType = MEM_RELEASE
-  push 0                                       {{iji}} // dwSize = 0
-  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // reload address (ecx was clobbered)
-  push {{.RegV.eax}}                           {{iji}} // lpAddress
-  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 1*4]     {{iji}} // get address of VirtualFree
-  call {{.RegV.eax}}                           {{iji}} // call VirtualFree
-
-  // call ExitThread
-  pop {{.RegV.eax}}                            {{iji}} // restore ExitThread address
-  push 0                                       {{iji}} // dwExitCode = 0
-  call {{.RegV.eax}}                           {{iji}} // call ExitThread
   ret 4                                        {{iji}} // unreachable
-
-xor_buf:
-  push {{.RegN.esi}}                           {{iji}} // save register
-  shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
- loop_xor:
-  mov {{.RegN.esi}}, [{{.RegV.ecx}}]           {{iji}} // load data from source
-  mov [{{.RegV.eax}}], {{.RegN.esi}}           {{iji}} // copy data to destination
-  xor [{{.RegV.eax}}], {{.RegN.ebx}}           {{iji}} // encrypt data with crypto key
-  add {{.RegV.ecx}}, 4                         {{iji}} // add source address
-  add {{.RegV.eax}}, 4                         {{iji}} // add destination address
-  dec {{.RegV.edx}}                            {{iji}} // update loop count
-  jnz loop_xor                                 {{iji}} // check need decrypt again
-  pop {{.RegN.esi}}                            {{iji}} // restore register
-  ret                                          {{iji}}
 
 gen_key:
   pop {{.RegV.eax}}                            {{iji}}
@@ -187,6 +146,20 @@ gen_key:
   rol {{.RegN.ebx}}, {{.Less32.A}}             {{iji}}
   add {{.RegN.ebx}}, {{.Reg.esi}}              {{iji}}
   ror {{.RegN.ebx}}, {{.Less16.B}}             {{iji}}
+  ret                                          {{iji}}
+
+xor_buf:
+  push {{.RegN.esi}}                           {{iji}} // save register
+  shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
+ loop_xor:
+  mov {{.RegN.esi}}, [{{.RegV.ecx}}]           {{iji}} // load data from source
+  mov [{{.RegV.eax}}], {{.RegN.esi}}           {{iji}} // copy data to destination
+  xor [{{.RegV.eax}}], {{.RegN.ebx}}           {{iji}} // encrypt data with crypto key
+  add {{.RegV.ecx}}, 4                         {{iji}} // add source address
+  add {{.RegV.eax}}, 4                         {{iji}} // add destination address
+  dec {{.RegV.edx}}                            {{iji}} // update loop count
+  jnz loop_xor                                 {{iji}} // check need decrypt again
+  pop {{.RegN.esi}}                            {{iji}} // restore register
   ret                                          {{iji}}
 
 protect:
@@ -232,15 +205,15 @@ decoy:
   jz skip_decoy                                {{iji}} // check need skip fill
   mov {{.RegV.eax}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set critical address
 
-  push {{.RegN.ebx}}                           {{iji}} // save ebx
+  push ebx                                     {{iji}} // save register
  loop_decoy:
-  mov {{.RegN.bl}}, byte ptr [{{.RegV.ecx}}]   {{iji}} // load one byte from decoy
-  mov [{{.RegV.eax}}], {{.RegN.bl}}            {{iji}} // write one byte to critical
+  mov bl, [{{.RegV.ecx}}]                      {{iji}} // load one byte from decoy
+  mov [{{.RegV.eax}}], bl                      {{iji}} // write one byte to critical
   inc {{.RegV.ecx}}                            {{iji}} // update decoy address
   inc {{.RegV.eax}}                            {{iji}} // update critical address
   dec {{.RegV.edx}}                            {{iji}} // update loop count
   jnz loop_decoy                               {{iji}} // check need fill next
-  pop {{.RegN.ebx}}                            {{iji}} // restore ebx
+  pop ebx                                      {{iji}} // restore register
 
  skip_decoy:
   ret                                          {{iji}}

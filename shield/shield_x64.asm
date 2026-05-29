@@ -174,9 +174,6 @@ method_free:
   // encrypt address of ExitThread
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
-  // save register for store api address
-  push {{.RegN.rdi}}                           {{iji}}
-
   // release critical memory
   mov {{.RegN.rdi}} , [{{.RegN.rbp}} + 2*8]    {{iji}} // get address of VirtualFree
   xor [{{.RegN.rbp}} + 2*8], {{.RegN.rdi}}     {{iji}} // destroy address of VirtualFree
@@ -198,7 +195,7 @@ method_free:
   call {{.RegN.rdi}}                           {{iji}} // call ExitThread
   add rsp, 0x28                                {{iji}} // restore stack for call convention
 
-  pop {{.RegN.rdi}}                            {{iji}} // unreachable
+  add rsp, 0x18                                {{iji}} // unreachable
   ret                                          {{iji}} // unreachable
 
 gen_key:
@@ -212,7 +209,7 @@ gen_key:
   xor {{.RegN.rbx}}, {{.Reg.rdi}}              {{iji}}
   rol {{.RegN.rbx}}, {{.Less32.A}}             {{iji}}
   add {{.RegN.rbx}}, {{.Reg.rsi}}              {{iji}}
-  ror {{.RegN.rbx}}, {{.Less16.B}}             {{iji}}
+  ror {{.RegN.rbx}}, {{.Less64.A}}             {{iji}}
   ret                                          {{iji}}
 
 xor_buf:
@@ -274,7 +271,7 @@ decoy:
   mov {{.RegV.rax}}, [{{.RegN.rbp}} + 4*8]     {{iji}} // set critical address
 
  loop_decoy:
-  mov {{.RegV.r8b}}, byte ptr [{{.RegV.rcx}}]  {{iji}} // load one byte from decoy
+  mov {{.RegV.r8b}}, [{{.RegV.rcx}}]           {{iji}} // load one byte from decoy
   mov [{{.RegV.rax}}], {{.RegV.r8b}}           {{iji}} // write one byte to critical
   inc {{.RegV.rcx}}                            {{iji}} // update decoy address
   inc {{.RegV.rax}}                            {{iji}} // update critical address

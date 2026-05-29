@@ -178,26 +178,29 @@ func mapRegWORD(reg string) string {
 	}
 }
 
-// map r8 -> r8b, rax -> al, eax -> al
+// map r8 -> r8b, rax -> al
 func mapRegBYTE(reg string) string {
+	if reg[0] == 'e' {
+		return reg
+	}
 	_, err := strconv.Atoi(reg[1:])
 	if err == nil {
 		return reg + "b"
 	}
 	switch reg {
-	case "rax", "eax":
+	case "rax":
 		return "al"
-	case "rbx", "ebx":
+	case "rbx":
 		return "bl"
-	case "rcx", "ecx":
+	case "rcx":
 		return "cl"
-	case "rdx", "edx":
+	case "rdx":
 		return "dl"
-	case "rdi", "edi":
+	case "rdi":
 		return "dil"
-	case "rsi", "esi":
+	case "rsi":
 		return "sil"
-	case "rbp", "ebp":
+	case "rbp":
 		return "bpl"
 	default:
 		panic(fmt.Sprintf("invalid register %s", reg))

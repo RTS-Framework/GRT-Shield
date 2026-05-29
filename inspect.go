@@ -27,7 +27,7 @@ func InspectShieldTemplate(arch int, src string) (string, []byte, error) {
 	}
 	inst, err := generator.assemble(asm)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to assemble shield: %s", err)
+		return asm, nil, fmt.Errorf("failed to assemble shield: %s", err)
 	}
 	err = generator.Close()
 	if err != nil {
@@ -57,7 +57,7 @@ func InspectJunkCodeTemplate(arch int, src string) (string, []byte, error) {
 	}
 	inst, err := generator.assemble(asm)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to assemble junk code: %s", err)
+		return asm, nil, fmt.Errorf("failed to assemble junk code: %s", err)
 	}
 	err = generator.Close()
 	if err != nil {

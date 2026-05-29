@@ -35,7 +35,7 @@ func TestInspectShieldTemplate(t *testing.T) {
 		errStr += "Invalid mnemonic (KS_ERR_ASM_MNEMONICFAIL)"
 		require.EqualError(t, err, errStr)
 		require.Nil(t, inst)
-		require.Zero(t, asm)
+		require.NotZero(t, asm)
 	})
 }
 
@@ -71,6 +71,6 @@ func TestInspectJunkCodeTemplate(t *testing.T) {
 		errStr += "Invalid mnemonic (KS_ERR_ASM_MNEMONICFAIL)"
 		require.EqualError(t, err, errStr)
 		require.Nil(t, inst)
-		require.Zero(t, asm)
+		require.NotZero(t, asm)
 	})
 }

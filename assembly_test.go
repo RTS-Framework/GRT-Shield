@@ -212,20 +212,17 @@ func TestMapRegWORD(t *testing.T) {
 
 func TestMapRegBYTE(t *testing.T) {
 	t.Run("x86", func(t *testing.T) {
-		for _, item := range []*struct {
-			input  string
-			output string
-		}{
-			{"eax", "al"},
-			{"ebx", "bl"},
-			{"ecx", "cl"},
-			{"edx", "dl"},
-			{"edi", "dil"},
-			{"esi", "sil"},
-			{"ebp", "bpl"},
+		for _, item := range []string{
+			"eax",
+			"ebx",
+			"ecx",
+			"edx",
+			"edi",
+			"esi",
+			"ebp",
 		} {
-			output := mapRegBYTE(item.input)
-			require.Equal(t, item.output, output)
+			output := mapRegBYTE(item)
+			require.Equal(t, item, output)
 		}
 	})
 

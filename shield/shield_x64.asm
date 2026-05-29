@@ -162,7 +162,7 @@ method_free:
 
   // destroy address of VirtualProtect
   mov {{.RegV.rcx}}, [{{.RegN.rbp}} + 1*8]     {{iji}}
-  or [{{.RegN.rbp}} + 1*8], {{.RegV.rcx}}      {{iji}}
+  xor [{{.RegN.rbp}} + 1*8], {{.RegV.rcx}}     {{iji}}
 
   // decrypt address of VirtualFree and ExitThread
   xor [{{.RegN.rbp}} + 2*8], {{.RegN.rbx}}     {{iji}}
@@ -174,26 +174,31 @@ method_free:
   // encrypt address of ExitThread
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
+  // save register for store api address
+  push {{.RegN.rdi}}                           {{iji}}
+
   // release critical memory
-  mov rax, [{{.RegN.rbp}} + 2*8]               {{iji}} // get address of VirtualFree
-  xor [{{.RegN.rbp}} + 2*8], rax               {{iji}} // destroy address of VirtualFree
+  mov {{.RegN.rdi}} , [{{.RegN.rbp}} + 2*8]    {{iji}} // get address of VirtualFree
+  xor [{{.RegN.rbp}} + 2*8], {{.RegN.rdi}}     {{iji}} // destroy address of VirtualFree
   mov rcx, [{{.RegN.rbp}} + 4*8]               {{iji}} // lpAddress
   xor rdx, rdx                                 {{iji}} // dwSize = 0
   mov r8, 0x4000                               {{iji}} // dwFreeType = MEM_RELEASE
-  sub rsp, 0x20                                {{iji}} // reserve stack for call convention
-  call rax                                     {{iji}} // call VirtualFree
-  add rsp, 0x20                                {{iji}} // restore stack for call convention
+  sub rsp, 0x28                                {{iji}} // reserve stack for call convention
+  call {{.RegN.rdi}}                           {{iji}} // call VirtualFree
+  add rsp, 0x28                                {{iji}} // restore stack for call convention
 
   // decrypt address of ExitThread
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rbx}}     {{iji}}
 
   // exit current thread
-  mov rax, [{{.RegN.rbp}} + 3*8]               {{iji}} // get address of ExitThread
-  xor [{{.RegN.rbp}} + 3*8], rax               {{iji}} // destroy address of ExitThread
+  mov {{.RegN.rdi}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // get address of ExitThread
+  xor [{{.RegN.rbp}} + 3*8], {{.RegN.rdi}}     {{iji}} // destroy address of ExitThread
   xor rcx, rcx                                 {{iji}} // dwExitCode = 0
-  sub rsp, 0x20                                {{iji}} // reserve stack for call convention
-  call rax                                     {{iji}} // call ExitThread
-  add rsp, 0x20                                {{iji}} // restore stack for call convention
+  sub rsp, 0x28                                {{iji}} // reserve stack for call convention
+  call {{.RegN.rdi}}                           {{iji}} // call ExitThread
+  add rsp, 0x28                                {{iji}} // restore stack for call convention
+
+  pop {{.RegN.rdi}}                            {{iji}} // unreachable
   ret                                          {{iji}} // unreachable
 
 gen_key:
@@ -226,11 +231,11 @@ protect:
   mov {{.RegV.rax}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get VirtualProtect address
   test {{.RegV.rax}}, {{.RegV.rax}}            {{iji}} // check VirtualProtect address is zero
   jz skip_protect                              {{iji}} // check need skip protect
-  xor {{.RegV.rax}}, {{.RegV.rax}}             {{iji}} // clear register about VirtualProtect
   push {{.RegN.rdi}}                           {{iji}} // save non-volatile register
-  mov {{.RegN.rdi}}, [{{.RegN.rbp}} + 1*8]     {{iji}} // get address of VirtualProtect
+  mov {{.RegN.rdi}}, {{.RegV.rax}}             {{iji}} // copy address of VirtualProtect
+  xor {{.RegV.rax}}, {{.RegV.rax}}             {{iji}} // clear register about VirtualProtect
   xor [{{.RegN.rbp}} + 1*8], {{.RegN.rbx}}     {{iji}} // encrypt address of VirtualProtect
-  push {{.RegV.rcx}}                           {{iji}} // prevent overwrite by next
+  push {{.RegV.rcx}}                           {{iji}} // prevent overwrite register by next
   mov rcx, [{{.RegN.rbp}} + 4*8]               {{iji}} // set address of critical
   mov rdx, [{{.RegN.rbp}} + 5*8]               {{iji}} // set size of critical
   pop r8                                       {{iji}} // set new protect

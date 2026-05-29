@@ -132,6 +132,64 @@ method_sleep:
   ret 4                                        {{iji}}
 
 method_free:
+  // save context
+  push {{.RegN.ebp}}                           {{iji}} // for save structure pointer
+  push {{.RegN.ebx}}                           {{iji}} // for save crypto key
+  push {{.RegN.esi}}                           {{iji}} // for save the memory page old protect
+
+  // save structure pointer
+  mov {{.RegN.ebp}}, [esp + 4*4]               {{iji}}
+
+  // generate crypto key from registers
+  call gen_key                                 {{iji}}
+
+  // erase return address
+  xor {{.RegV.ecx}}, {{.RegV.ecx}}             {{iji}}
+  mov [esp + 3*4], {{.RegV.ecx}}               {{iji}}
+
+  // encrypt address of VirtualFree and ExitThread
+  xor [{{.RegN.ebp}} + 2*4], {{.RegN.ebx}}     {{iji}}
+  xor [{{.RegN.ebp}} + 3*4], {{.RegN.ebx}}     {{iji}}
+
+  // adjust the page protect to PAGE_READWRITE
+  push 0x04                                    {{iji}}
+  call protect                                 {{iji}}
+
+  // destroy address of VirtualProtect
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 1*4]     {{iji}}
+  xor [{{.RegN.ebp}} + 1*4], {{.RegV.ecx}}     {{iji}}
+
+  // decrypt address of VirtualFree and ExitThread
+  xor [{{.RegN.ebp}} + 2*4], {{.RegN.ebx}}     {{iji}}
+  xor [{{.RegN.ebp}} + 3*4], {{.RegN.ebx}}     {{iji}}
+
+  // erase critical memory and deploy decoy
+  call decoy                                   {{iji}}
+
+  // encrypt address of ExitThread
+  xor [{{.RegN.ebp}} + 3*4], {{.RegN.ebx}}     {{iji}}
+
+  // release critical memory
+  mov {{.RegN.edi}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get address of VirtualFree
+  xor [{{.RegN.ebp}} + 2*4], {{.RegN.edi}}     {{iji}} // destroy address of VirtualFree
+  push 0x4000                                  {{iji}} // dwFreeType = MEM_RELEASE
+  xor {{.RegV.edx}}, {{.RegV.edx}}             {{iji}} // dwSize = 0
+  push {{.RegV.edx}}                           {{iji}} // push dwSize
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // get critical address
+  push {{.RegV.ecx}}                           {{iji}} // push critical address
+  call {{.RegN.edi}}                           {{iji}} // call VirtualFree
+
+  // decrypt address of ExitThread
+  xor [{{.RegN.ebp}} + 3*4], {{.RegN.ebx}}     {{iji}}
+
+  // exit current thread
+  mov {{.RegN.edi}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // get address of ExitThread
+  xor [{{.RegN.ebp}} + 3*4], {{.RegN.edi}}     {{iji}} // destroy address of ExitThread
+  xor {{.RegV.ecx}}, {{.RegV.ecx}}             {{iji}} // dwExitCode = 0
+  push {{.RegV.ecx}}                           {{iji}} // push dwExitCode
+  call {{.RegN.edi}}                           {{iji}} // call ExitThread
+
+  add esp, 0x0C                                {{iji}} // unreachable
   ret 4                                        {{iji}} // unreachable
 
 gen_key:

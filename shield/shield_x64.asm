@@ -6,7 +6,7 @@
 //   CriticalSize must be 8 bytes aligned
 
 // struct:
-//   ======== Sleep ========                               ======== Free ========
+//   ======== Sleep ========                               ======== Exit ========
 //   [rbp + 0*8]  Method                                   [rbp + 0*8]  Method
 //   [rbp + 1*8]  VirtualProtect                           [rbp + 1*8]  VirtualProtect
 //   [rbp + 2*8]  WaitForSingleObject                      [rbp + 2*8]  VirtualFree
@@ -40,7 +40,7 @@ entry:
   cmp {{.RegV.rax}}, 1                         {{iji}}
   je method_sleep                              {{iji}}
   cmp {{.RegV.rax}}, 2                         {{iji}}
-  je method_free                               {{iji}}
+  je method_exit                               {{iji}}
 
  exit:
   ret                                          {{iji}}
@@ -136,7 +136,7 @@ method_sleep:
   pop {{.RegN.rbp}}                            {{iji}}
   ret                                          {{iji}}
 
-method_free:
+method_exit:
   // save context and ensure stack is 16 bytes alignd
   push {{.RegN.rbp}}                           {{iji}} // for save structure pointer
   push {{.RegN.rbx}}                           {{iji}} // for save crypto key

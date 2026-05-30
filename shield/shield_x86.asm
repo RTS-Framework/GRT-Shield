@@ -169,6 +169,9 @@ method_free:
   // encrypt address of ExitThread
   xor [{{.RegN.ebp}} + 3*4], {{.RegN.ebx}}     {{iji}}
 
+  // save register for store api address
+  push {{.RegN.edi}}                           {{iji}}
+
   // release critical memory
   mov {{.RegN.edi}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get address of VirtualFree
   xor [{{.RegN.ebp}} + 2*4], {{.RegN.edi}}     {{iji}} // destroy address of VirtualFree
@@ -189,7 +192,13 @@ method_free:
   push {{.RegV.ecx}}                           {{iji}} // push dwExitCode
   call {{.RegN.edi}}                           {{iji}} // call ExitThread
 
-  add esp, 0x0C                                {{iji}} // unreachable
+  // restore context
+  pop {{.RegN.edi}}                            {{iji}} // unreachable
+  pop {{.RegN.esi}}                            {{iji}} // unreachable
+  pop {{.RegN.ebx}}                            {{iji}} // unreachable
+  pop {{.RegN.ebp}}                            {{iji}} // unreachable
+
+  // it will return to the released memory page
   ret 4                                        {{iji}} // unreachable
 
 gen_key:

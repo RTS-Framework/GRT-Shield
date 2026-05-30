@@ -18,7 +18,7 @@ import (
 
 // MaxShieldSize is the maximum supported shield size.
 // Reference the shield stub at the tail of Gleam-RT.
-const MaxShieldSize = 4096
+const MaxShieldSize = 6 * 1024
 
 // ErrShieldSizeTooLarge is used to retry generate.
 var ErrShieldSizeTooLarge = errors.New("shield size is too large")
@@ -146,7 +146,7 @@ func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error
 	}
 	output, err := gen.assemble(shield)
 	if err != nil {
-		return nil, fmt.Errorf("failed to assemble shield source: %s", err)
+		return nil, fmt.Errorf("failed to assemble shield: %s", err)
 	}
 	if len(output) == 0 {
 		return nil, fmt.Errorf("assemble shield source with unknown error")

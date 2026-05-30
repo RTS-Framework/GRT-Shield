@@ -11,7 +11,7 @@ import (
 // methods for provide to the shield.
 const (
 	methodSleep = 1 // hide Gleam-RT and sleep
-	methodFree  = 2 // free Gleam-RT and exit thread
+	methodExit  = 2 // free Gleam-RT and exit
 )
 
 // just for prevent [import _ "embed"] :)

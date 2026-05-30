@@ -42,7 +42,7 @@ type testSleepArgs struct {
 	TimerHandle         uintptr
 }
 
-type testFreeArgs struct {
+type testExitArgs struct {
 	Method          uintptr
 	VirtualProtect  uintptr
 	VirtualFree     uintptr
@@ -86,7 +86,7 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 			}
 			time.Sleep(10 * time.Millisecond)
 		}
-		t.Fatal("decoy is not deploy")
+		panic("decoy is not deploy")
 	}
 
 	now := time.Now()
@@ -156,9 +156,9 @@ func testBuildSleepArgs(t *testing.T, critical, decoy, shelter []byte, sleep tim
 	return args
 }
 
-func testBuildFreeArgs(critical, decoy []byte) *testFreeArgs {
-	args := &testFreeArgs{
-		Method:          methodFree,
+func testBuildExitArgs(critical, decoy []byte) *testExitArgs {
+	args := &testExitArgs{
+		Method:          methodExit,
 		VirtualProtect:  procVirtualProtect.Addr(),
 		VirtualFree:     procVirtualFree.Addr(),
 		ExitThread:      procExitThread.Addr(),

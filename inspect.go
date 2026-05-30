@@ -1,6 +1,7 @@
 package shield
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -25,9 +26,15 @@ func InspectShieldTemplate(arch int, src string) (string, []byte, error) {
 	if err != nil {
 		return "", nil, err
 	}
+	if len(asm) == 0 {
+		return "", nil, errors.New("empty output shield assembly source")
+	}
 	inst, err := generator.assemble(asm)
 	if err != nil {
 		return asm, nil, fmt.Errorf("failed to assemble shield: %s", err)
+	}
+	if len(inst) == 0 {
+		return asm, nil, errors.New("assemble shield source with unknown error")
 	}
 	err = generator.Close()
 	if err != nil {
@@ -55,9 +62,15 @@ func InspectJunkCodeTemplate(arch int, src string) (string, []byte, error) {
 	if err != nil {
 		return "", nil, err
 	}
+	if len(asm) == 0 {
+		return "", nil, errors.New("empty output junk code assembly source")
+	}
 	inst, err := generator.assemble(asm)
 	if err != nil {
 		return asm, nil, fmt.Errorf("failed to assemble junk code: %s", err)
+	}
+	if len(inst) == 0 {
+		return asm, nil, errors.New("assemble junk code source with unknown error")
 	}
 	err = generator.Close()
 	if err != nil {

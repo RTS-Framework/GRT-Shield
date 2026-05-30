@@ -45,10 +45,14 @@ entry:
   cmp {{.RegV.rax}}, 2                         {{iji}}
   je method_exit                               {{iji}}
 
+  // process the stack balance
+  pop rcx                                      {{iji}}
+
  exit:
   ret                                          {{iji}}
 
 method_sleep:
+  // restore argument pointer
   pop rcx                                      {{iji}}
 
   // save context and ensure stack is 16 bytes alignd
@@ -142,6 +146,7 @@ method_sleep:
   ret                                          {{iji}}
 
 method_exit:
+  // restore argument pointer
   pop rcx                                      {{iji}}
 
   // save context and ensure stack is 16 bytes alignd

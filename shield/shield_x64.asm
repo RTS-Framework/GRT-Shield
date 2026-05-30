@@ -35,6 +35,9 @@ entry:
   test rcx, rcx                                {{iji}}
   jz exit                                      {{iji}}
 
+  // save rcx, because it maybe overwrite next
+  push rcx                                     {{iji}}
+
   // check method and dispatch
   mov {{.RegV.rax}}, [rcx]                     {{iji}}
   cmp {{.RegV.rax}}, 1                         {{iji}}
@@ -46,6 +49,8 @@ entry:
   ret                                          {{iji}}
 
 method_sleep:
+  pop rcx                                      {{iji}}
+
   // save context and ensure stack is 16 bytes alignd
   push {{.RegN.rbp}}                           {{iji}} // for save structure pointer
   push {{.RegN.rbx}}                           {{iji}} // for save crypto key
@@ -137,6 +142,8 @@ method_sleep:
   ret                                          {{iji}}
 
 method_exit:
+  pop rcx                                      {{iji}}
+
   // save context and ensure stack is 16 bytes alignd
   push {{.RegN.rbp}}                           {{iji}} // for save structure pointer
   push {{.RegN.rbx}}                           {{iji}} // for save crypto key

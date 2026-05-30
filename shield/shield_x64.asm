@@ -211,7 +211,7 @@ gen_key:
   pop {{.RegV.rax}}                            {{iji}}
   push {{.RegV.rax}}                           {{iji}}
   mov {{.RegN.rbx}}, rsp                       {{iji}}
-  add {{.RegN.rbx}}, {{.Reg.rax}}              {{iji}}
+  add {{.RegN.rbx}}, {{.RegV.rax}}             {{iji}}
   xor {{.RegN.rbx}}, rcx                       {{iji}}
   add {{.RegN.rbx}}, {{.Reg.rdx}}              {{iji}}
   ror {{.RegN.rbx}}, {{.Less16.A}}             {{iji}}

@@ -205,7 +205,7 @@ gen_key:
   pop {{.RegV.eax}}                            {{iji}}
   push {{.RegV.eax}}                           {{iji}}
   mov {{.RegN.ebx}}, esp                       {{iji}}
-  add {{.RegN.ebx}}, {{.Reg.eax}}              {{iji}}
+  add {{.RegN.ebx}}, {{.RegV.eax}}             {{iji}}
   xor {{.RegN.ebx}}, {{.Reg.ecx}}              {{iji}}
   add {{.RegN.ebx}}, {{.Reg.edx}}              {{iji}}
   ror {{.RegN.ebx}}, {{.Less16.A}}             {{iji}}

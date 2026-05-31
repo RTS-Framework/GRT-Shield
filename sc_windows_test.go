@@ -121,8 +121,9 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 
 	wg.Wait()
 
-	// total check
-	require.Greater(t, time.Since(now), sleep*2)
+	// check total elapsed time and compare data
+	deviation := 10 * time.Millisecond // about Windows CPU Scheduler
+	require.Greater(t, time.Since(now), sleep*2-deviation)
 	require.True(t, strings.HasPrefix(string(critical), "runtime instruction"))
 	require.NotZero(t, binary.LittleEndian.Uint64(shelter[:8]))
 

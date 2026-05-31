@@ -40,6 +40,40 @@ func TestJunkCode(t *testing.T) {
 		testShield(t, ctx.Output, testSleepTime)
 	})
 
+	t.Run("invalid template", func(t *testing.T) {
+		opts.JunkCodeX86 = []string{"{{.Invalid}}"}
+
+		ctx, err := generator.Generate(32, opts)
+		require.ErrorContains(t, err, "failed to build junk code assembly source")
+		require.Nil(t, ctx)
+	})
+
+	t.Run("empty output", func(t *testing.T) {
+		opts.JunkCodeX86 = []string{""}
+
+		ctx, err := generator.Generate(32, opts)
+		require.ErrorContains(t, err, "empty output junk code assembly source")
+		require.Nil(t, ctx)
+	})
+
+	t.Run("invalid source", func(t *testing.T) {
+		opts.JunkCodeX86 = []string{"invalid"}
+
+		ctx, err := generator.Generate(32, opts)
+		errStr := "failed to assemble junk code: failed to assemble: "
+		errStr += "Invalid mnemonic (KS_ERR_ASM_MNEMONICFAIL)"
+		require.ErrorContains(t, err, errStr)
+		require.Nil(t, ctx)
+	})
+
+	t.Run("unknown error", func(t *testing.T) {
+		opts.JunkCodeX86 = []string{"// unknown op"}
+
+		ctx, err := generator.Generate(32, opts)
+		require.ErrorContains(t, err, "assemble junk code source with unknown error")
+		require.Nil(t, ctx)
+	})
+
 	err := generator.Close()
 	require.NoError(t, err)
 }

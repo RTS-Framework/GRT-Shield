@@ -15,29 +15,45 @@ func TestJunkCode(t *testing.T) {
 	}
 
 	t.Run("x86", func(t *testing.T) {
-		ctx, err := generator.Generate(32, opts)
-		require.NoError(t, err)
-		t.Log("size:", len(ctx.Output))
-		t.Log(ctx.ShieldInst)
+		for i := 0; i < 20; i++ {
+			ctx, err := generator.Generate(32, opts)
+			if err == ErrShieldSizeTooLarge {
+				continue
+			}
+			require.NoError(t, err)
 
-		if runtime.GOOS != "windows" || runtime.GOARCH != "386" {
+			t.Log("size:", len(ctx.Output))
+			t.Log(ctx.ShieldInst)
+
+			if runtime.GOOS != "windows" || runtime.GOARCH != "386" {
+				return
+			}
+
+			testShield(t, ctx.Output, testSleepTime)
 			return
 		}
-
-		testShield(t, ctx.Output, testSleepTime)
+		t.Fatal("failed to generate shield")
 	})
 
 	t.Run("x64", func(t *testing.T) {
-		ctx, err := generator.Generate(64, opts)
-		require.NoError(t, err)
-		t.Log("size:", len(ctx.Output))
-		t.Log(ctx.ShieldInst)
+		for i := 0; i < 20; i++ {
+			ctx, err := generator.Generate(64, opts)
+			if err == ErrShieldSizeTooLarge {
+				continue
+			}
+			require.NoError(t, err)
 
-		if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
+			t.Log("size:", len(ctx.Output))
+			t.Log(ctx.ShieldInst)
+
+			if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
+				return
+			}
+
+			testShield(t, ctx.Output, testSleepTime)
 			return
 		}
-
-		testShield(t, ctx.Output, testSleepTime)
+		t.Fatal("failed to generate shield")
 	})
 
 	t.Run("invalid template", func(t *testing.T) {

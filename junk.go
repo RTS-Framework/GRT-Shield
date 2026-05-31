@@ -133,10 +133,16 @@ func (gen *Generator) junkTemplate() []byte {
 	if err != nil {
 		panic(err)
 	}
+	if len(asm) == 0 {
+		panic("empty output junk code assembly source")
+	}
 	// assemble junk code
 	inst, err := gen.assemble(asm)
 	if err != nil {
 		panic(fmt.Sprintf("failed to assemble junk code: %s", err))
+	}
+	if len(inst) == 0 {
+		panic("assemble junk code source with unknown error")
 	}
 	return inst
 }

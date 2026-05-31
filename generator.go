@@ -142,14 +142,14 @@ func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error
 		return nil, fmt.Errorf("failed to build shield: %s", err)
 	}
 	if len(shield) == 0 {
-		return nil, fmt.Errorf("empty output shield assembly source")
+		return nil, errors.New("empty output shield assembly source")
 	}
 	output, err := gen.assemble(shield)
 	if err != nil {
 		return nil, fmt.Errorf("failed to assemble shield: %s", err)
 	}
 	if len(output) == 0 {
-		return nil, fmt.Errorf("assemble shield source with unknown error")
+		return nil, errors.New("assemble shield source with unknown error")
 	}
 	if len(output) > MaxShieldSize {
 		return nil, ErrShieldSizeTooLarge

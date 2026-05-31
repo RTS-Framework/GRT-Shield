@@ -30,10 +30,24 @@ func TestInspectShieldTemplate(t *testing.T) {
 	})
 
 	t.Run("invalid template", func(t *testing.T) {
-		asm, inst, err := InspectShieldTemplate(64, "invalid")
+		asm, inst, err := InspectShieldTemplate(32, "{{.Invalid}}")
+		require.ErrorContains(t, err, "failed to build shield source")
+		require.Nil(t, inst)
+		require.Zero(t, asm)
+	})
+
+	t.Run("invalid source", func(t *testing.T) {
+		asm, inst, err := InspectShieldTemplate(32, "invalid")
 		errStr := "failed to assemble shield: failed to assemble: "
 		errStr += "Invalid mnemonic (KS_ERR_ASM_MNEMONICFAIL)"
 		require.EqualError(t, err, errStr)
+		require.Nil(t, inst)
+		require.NotZero(t, asm)
+	})
+
+	t.Run("unknown error", func(t *testing.T) {
+		asm, inst, err := InspectShieldTemplate(32, "// unknown op")
+		require.EqualError(t, err, "assemble shield source with unknown error")
 		require.Nil(t, inst)
 		require.NotZero(t, asm)
 	})
@@ -66,10 +80,24 @@ func TestInspectJunkCodeTemplate(t *testing.T) {
 	})
 
 	t.Run("invalid template", func(t *testing.T) {
-		asm, inst, err := InspectJunkCodeTemplate(64, "invalid")
+		asm, inst, err := InspectJunkCodeTemplate(32, "{{.Invalid}}")
+		require.ErrorContains(t, err, "failed to build junk code assembly source")
+		require.Nil(t, inst)
+		require.Zero(t, asm)
+	})
+
+	t.Run("invalid source", func(t *testing.T) {
+		asm, inst, err := InspectJunkCodeTemplate(32, "invalid")
 		errStr := "failed to assemble junk code: failed to assemble: "
 		errStr += "Invalid mnemonic (KS_ERR_ASM_MNEMONICFAIL)"
 		require.EqualError(t, err, errStr)
+		require.Nil(t, inst)
+		require.NotZero(t, asm)
+	})
+
+	t.Run("unknown error", func(t *testing.T) {
+		asm, inst, err := InspectJunkCodeTemplate(32, "// unknown op")
+		require.EqualError(t, err, "assemble junk code source with unknown error")
 		require.Nil(t, inst)
 		require.NotZero(t, asm)
 	})

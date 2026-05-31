@@ -26,9 +26,6 @@ func InspectShieldTemplate(arch int, src string) (string, []byte, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	if len(asm) == 0 {
-		return "", nil, errors.New("empty output shield assembly source")
-	}
 	inst, err := generator.assemble(asm)
 	if err != nil {
 		return asm, nil, fmt.Errorf("failed to assemble shield: %s", err)
@@ -61,9 +58,6 @@ func InspectJunkCodeTemplate(arch int, src string) (string, []byte, error) {
 	asm, err := generator.buildJunkCode(src)
 	if err != nil {
 		return "", nil, err
-	}
-	if len(asm) == 0 {
-		return "", nil, errors.New("empty output junk code assembly source")
 	}
 	inst, err := generator.assemble(asm)
 	if err != nil {

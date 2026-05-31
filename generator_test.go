@@ -12,29 +12,45 @@ func TestGenerator(t *testing.T) {
 	generator := NewGenerator()
 
 	t.Run("x86", func(t *testing.T) {
-		ctx, err := generator.Generate(32, nil)
-		require.NoError(t, err)
-		t.Log("size:", len(ctx.Output))
-		t.Log("seed:", ctx.Seed)
+		for i := 0; i < 10; i++ {
+			ctx, err := generator.Generate(32, nil)
+			if err == ErrShieldSizeTooLarge {
+				continue
+			}
+			require.NoError(t, err)
 
-		if runtime.GOOS != "windows" || runtime.GOARCH != "386" {
+			t.Log("size:", len(ctx.Output))
+			t.Log(ctx.ShieldInst)
+
+			if runtime.GOOS != "windows" || runtime.GOARCH != "386" {
+				return
+			}
+
+			testShield(t, ctx.Output, testSleepTime)
 			return
 		}
-
-		testShield(t, ctx.Output, testSleepTime)
+		t.Fatal("failed to generate shield")
 	})
 
 	t.Run("x64", func(t *testing.T) {
-		ctx, err := generator.Generate(64, nil)
-		require.NoError(t, err)
-		t.Log("size:", len(ctx.Output))
-		t.Log("seed:", ctx.Seed)
+		for i := 0; i < 10; i++ {
+			ctx, err := generator.Generate(64, nil)
+			if err == ErrShieldSizeTooLarge {
+				continue
+			}
+			require.NoError(t, err)
 
-		if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
+			t.Log("size:", len(ctx.Output))
+			t.Log(ctx.ShieldInst)
+
+			if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
+				return
+			}
+
+			testShield(t, ctx.Output, testSleepTime)
 			return
 		}
-
-		testShield(t, ctx.Output, testSleepTime)
+		t.Fatal("failed to generate shield")
 	})
 
 	t.Run("invalid arch", func(t *testing.T) {

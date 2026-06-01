@@ -27,6 +27,8 @@ var (
 	procSetWaitableTimer      = modKernel32.NewProc("SetWaitableTimer")
 	procFlushInstructionCache = modKernel32.NewProc("FlushInstructionCache")
 	procExitThread            = modKernel32.NewProc("ExitThread")
+	procCreateThread          = modKernel32.NewProc("CreateThread")
+	procGetExitCodeThread     = modKernel32.NewProc("GetExitCodeThread")
 )
 
 type testSleepArgs struct {
@@ -130,6 +132,90 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	// prevent compiler optimization
 	runtime.KeepAlive(critical)
 	runtime.KeepAlive(shelter)
+}
+
+type testExitThreadData struct {
+	ShieldAddr uintptr
+	Args       *testExitArgs
+}
+
+func testShieldExit(t *testing.T, shield []byte) {
+	// allocate critical memory with VirtualAlloc because VirtualFree will be called on it
+	criticalSize := uintptr(8192)
+	criticalAddr, err := windows.VirtualAlloc(0, criticalSize,
+		windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_EXECUTE_READWRITE)
+	require.NoError(t, err)
+	freed := false
+	defer func() {
+		if !freed {
+			_ = windows.VirtualFree(criticalAddr, 0, windows.MEM_RELEASE)
+		}
+	}()
+
+	// write known data to critical memory
+	critical := unsafe.Slice((*byte)(unsafe.Pointer(criticalAddr)), criticalSize)
+	copy(critical, "runtime instruction")
+
+	// prepare decoy
+	var decoy []byte
+	switch runtime.GOARCH {
+	case "386":
+		decoy = testAddX86
+	case "amd64":
+		decoy = testAddX64
+	default:
+		panic("unsupported architecture")
+	}
+
+	// deploy shield
+	shieldAddr := testDeployShield(t, shield)
+	t.Logf("shield address:   0x%X\n", shieldAddr)
+	t.Logf("critical address: 0x%X\n", criticalAddr)
+
+	// test with VirtualProtect enabled
+	args := testBuildExitArgs(critical, decoy)
+	testRunShieldExit(t, shieldAddr, args)
+
+	// the shield called VirtualFree on critical, mark as freed
+	ret, _, _ := procVirtualFree.Call(criticalAddr, 0, windows.MEM_RELEASE)
+	require.Zero(t, ret, "critical memory should already be freed by shield")
+	freed = true
+
+	// prevent compiler optimization
+	runtime.KeepAlive(critical)
+	runtime.KeepAlive(args)
+}
+
+func testRunShieldExit(t *testing.T, shieldAddr uintptr, args *testExitArgs) {
+	data := &testExitThreadData{
+		ShieldAddr: shieldAddr,
+		Args:       args,
+	}
+
+	callback := syscall.NewCallback(func(lpParameter uintptr) uintptr {
+		d := (*testExitThreadData)(unsafe.Pointer(lpParameter))
+		_, _, _ = syscall.SyscallN(d.ShieldAddr, uintptr(unsafe.Pointer(d.Args)))
+		return 0 // unreachable
+	})
+
+	threadHandle, _, err := procCreateThread.Call(
+		0, 0, callback, uintptr(unsafe.Pointer(data)), 0, 0,
+	)
+	require.NotZero(t, threadHandle, err)
+	defer func() { _ = windows.CloseHandle(windows.Handle(threadHandle)) }()
+
+	// wait for thread to exit (ExitThread signals the thread handle)
+	ret, _, err := procWaitForSingleObject.Call(threadHandle, 5000)
+	require.Equal(t, uintptr(windows.WAIT_OBJECT_0), ret,
+		"WaitForSingleObject failed: %v", err)
+
+	// verify thread exit code = 0
+	var exitCode uintptr
+	procGetExitCodeThread.Call(threadHandle, uintptr(unsafe.Pointer(&exitCode)))
+	require.Equal(t, uintptr(0), exitCode, "thread exit code should be 0")
+
+	// prevent callback from being garbage collected
+	runtime.KeepAlive(data)
 }
 
 func testBuildSleepArgs(t *testing.T, critical, decoy, shelter []byte, sleep time.Duration) *testSleepArgs {

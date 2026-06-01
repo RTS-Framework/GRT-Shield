@@ -76,9 +76,6 @@ func main() {
 
 	output := ctx.Output
 	if outMod {
-		// aligned to the memory page size
-		pad := bytes.Repeat([]byte{0x00}, shield.MaxShieldSize-len(output))
-		output = append(output, pad...)
 		output = dumpModule(output)
 	}
 	err = os.WriteFile(outPath, output, 0600) // #nosec

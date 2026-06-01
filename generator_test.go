@@ -59,6 +59,34 @@ func TestGenerator(t *testing.T) {
 		require.Nil(t, ctx)
 	})
 
+	opts := new(Options)
+
+	t.Run("invalid template", func(t *testing.T) {
+		opts.ShieldX86 = "{{.Invalid}}"
+
+		ctx, err := generator.Generate(32, opts)
+		require.ErrorContains(t, err, "failed to build shield source")
+		require.Nil(t, ctx)
+	})
+
+	t.Run("invalid source", func(t *testing.T) {
+		opts.ShieldX86 = "invalid"
+
+		ctx, err := generator.Generate(32, opts)
+		errStr := "failed to assemble shield: failed to assemble: "
+		errStr += "Invalid mnemonic (KS_ERR_ASM_MNEMONICFAIL)"
+		require.ErrorContains(t, err, errStr)
+		require.Nil(t, ctx)
+	})
+
+	t.Run("unknown error", func(t *testing.T) {
+		opts.ShieldX86 = "// unknown op"
+
+		ctx, err := generator.Generate(32, opts)
+		require.EqualError(t, err, "assemble shield source with unknown error")
+		require.Nil(t, ctx)
+	})
+
 	err := generator.Close()
 	require.NoError(t, err)
 }

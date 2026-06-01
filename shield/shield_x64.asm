@@ -55,7 +55,7 @@ method_sleep:
   // restore argument pointer
   pop rcx                                      {{iji}}
 
-  // save context and ensure stack is 16 bytes alignd
+  // save context and ensure stack is 16 bytes aligned
   push {{.RegN.rbp}}                           {{iji}} // for save structure pointer
   push {{.RegN.rbx}}                           {{iji}} // for save crypto key
   push {{.RegN.rsi}}                           {{iji}} // for save the memory page old protect
@@ -149,7 +149,7 @@ method_exit:
   // restore argument pointer
   pop rcx                                      {{iji}}
 
-  // save context and ensure stack is 16 bytes alignd
+  // save context and ensure stack is 16 bytes aligned
   push {{.RegN.rbp}}                           {{iji}} // for save structure pointer
   push {{.RegN.rbx}}                           {{iji}} // for save crypto key
   push {{.RegN.rsi}}                           {{iji}} // for save the memory page old protect

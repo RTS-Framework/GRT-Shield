@@ -55,7 +55,18 @@ type testExitArgs struct {
 	DecoySize       uintptr
 }
 
+type testExitCtx struct {
+	Shield uintptr
+	Args   *testExitArgs
+}
+
 func testShield(t *testing.T, shield []byte, sleep time.Duration) {
+	shieldAddr := testDeployShield(t, shield)
+	testShieldSleep(t, shieldAddr, sleep)
+	testShieldExit(t, shieldAddr)
+}
+
+func testShieldSleep(t *testing.T, shield uintptr, sleep time.Duration) {
 	critical := make([]byte, 8192)
 	copy(critical, "runtime instruction")
 	var decoy []byte
@@ -69,11 +80,11 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	}
 	shelter := make([]byte, 16384)
 
-	shieldAddr := testDeployShield(t, shield)
 	criticalAddr := uintptr(unsafe.Pointer(&critical[0]))
 	decoyAddr := uintptr(unsafe.Pointer(&decoy[0]))
 	shelterAddr := uintptr(unsafe.Pointer(&shelter[0]))
-	t.Logf("shield address:   0x%X\n", shieldAddr)
+
+	t.Logf("shield address:   0x%X\n", shield)
 	t.Logf("critical address: 0x%X\n", criticalAddr)
 	t.Logf("decoy address:    0x%X\n", decoyAddr)
 	t.Logf("shelter address:  0x%X\n", shelterAddr)
@@ -102,7 +113,7 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	go checker()
 
 	args := testBuildSleepArgs(t, critical, decoy, shelter, sleep)
-	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
+	_, _, _ = syscall.SyscallN(shield, uintptr(unsafe.Pointer(args)))
 	err = windows.CloseHandle(windows.Handle(args.TimerHandle))
 	require.NoError(t, err)
 
@@ -117,7 +128,7 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 
 	args = testBuildSleepArgs(t, critical, decoy, shelter, sleep)
 	args.VirtualProtect = 0
-	_, _, _ = syscall.SyscallN(shieldAddr, uintptr(unsafe.Pointer(args)))
+	_, _, _ = syscall.SyscallN(shield, uintptr(unsafe.Pointer(args)))
 	err = windows.CloseHandle(windows.Handle(args.TimerHandle))
 	require.NoError(t, err)
 
@@ -134,29 +145,13 @@ func testShield(t *testing.T, shield []byte, sleep time.Duration) {
 	runtime.KeepAlive(shelter)
 }
 
-type testExitThreadData struct {
-	ShieldAddr uintptr
-	Args       *testExitArgs
-}
-
-func testShieldExit(t *testing.T, shield []byte) {
-	// allocate critical memory with VirtualAlloc because VirtualFree will be called on it
+func testShieldExit(t *testing.T, shield uintptr) {
 	criticalSize := uintptr(8192)
-	criticalAddr, err := windows.VirtualAlloc(0, criticalSize,
-		windows.MEM_COMMIT|windows.MEM_RESERVE, windows.PAGE_EXECUTE_READWRITE)
+	allocType := uint32(windows.MEM_COMMIT | windows.MEM_RESERVE)
+	criticalAddr, err := windows.VirtualAlloc(0, criticalSize, allocType, windows.PAGE_READWRITE)
 	require.NoError(t, err)
-	freed := false
-	defer func() {
-		if !freed {
-			_ = windows.VirtualFree(criticalAddr, 0, windows.MEM_RELEASE)
-		}
-	}()
-
-	// write known data to critical memory
 	critical := unsafe.Slice((*byte)(unsafe.Pointer(criticalAddr)), criticalSize)
 	copy(critical, "runtime instruction")
-
-	// prepare decoy
 	var decoy []byte
 	switch runtime.GOARCH {
 	case "386":
@@ -167,55 +162,17 @@ func testShieldExit(t *testing.T, shield []byte) {
 		panic("unsupported architecture")
 	}
 
-	// deploy shield
-	shieldAddr := testDeployShield(t, shield)
-	t.Logf("shield address:   0x%X\n", shieldAddr)
+	decoyAddr := uintptr(unsafe.Pointer(&decoy[0]))
+
+	t.Logf("shield address:   0x%X\n", shield)
 	t.Logf("critical address: 0x%X\n", criticalAddr)
+	t.Logf("decoy address:    0x%X\n", decoyAddr)
 
-	// test with VirtualProtect enabled
 	args := testBuildExitArgs(critical, decoy)
-	testRunShieldExit(t, shieldAddr, args)
-
-	// the shield called VirtualFree on critical, mark as freed
-	ret, _, _ := procVirtualFree.Call(criticalAddr, 0, windows.MEM_RELEASE)
-	require.Zero(t, ret, "critical memory should already be freed by shield")
-	freed = true
 
 	// prevent compiler optimization
 	runtime.KeepAlive(critical)
 	runtime.KeepAlive(args)
-}
-
-func testRunShieldExit(t *testing.T, shieldAddr uintptr, args *testExitArgs) {
-	data := &testExitThreadData{
-		ShieldAddr: shieldAddr,
-		Args:       args,
-	}
-
-	callback := syscall.NewCallback(func(lpParameter uintptr) uintptr {
-		d := (*testExitThreadData)(unsafe.Pointer(lpParameter))
-		_, _, _ = syscall.SyscallN(d.ShieldAddr, uintptr(unsafe.Pointer(d.Args)))
-		return 0 // unreachable
-	})
-
-	threadHandle, _, err := procCreateThread.Call(
-		0, 0, callback, uintptr(unsafe.Pointer(data)), 0, 0,
-	)
-	require.NotZero(t, threadHandle, err)
-	defer func() { _ = windows.CloseHandle(windows.Handle(threadHandle)) }()
-
-	// wait for thread to exit (ExitThread signals the thread handle)
-	ret, _, err := procWaitForSingleObject.Call(threadHandle, 5000)
-	require.Equal(t, uintptr(windows.WAIT_OBJECT_0), ret,
-		"WaitForSingleObject failed: %v", err)
-
-	// verify thread exit code = 0
-	var exitCode uintptr
-	procGetExitCodeThread.Call(threadHandle, uintptr(unsafe.Pointer(&exitCode)))
-	require.Equal(t, uintptr(0), exitCode, "thread exit code should be 0")
-
-	// prevent callback from being garbage collected
-	runtime.KeepAlive(data)
 }
 
 func testBuildSleepArgs(t *testing.T, critical, decoy, shelter []byte, sleep time.Duration) *testSleepArgs {

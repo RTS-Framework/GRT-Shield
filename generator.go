@@ -141,9 +141,6 @@ func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error
 	if err != nil {
 		return nil, fmt.Errorf("failed to build shield: %s", err)
 	}
-	if len(shield) == 0 {
-		return nil, errors.New("empty output shield assembly source")
-	}
 	output, err := gen.assemble(shield)
 	if err != nil {
 		return nil, fmt.Errorf("failed to assemble shield: %s", err)

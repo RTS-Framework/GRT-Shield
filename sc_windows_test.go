@@ -171,7 +171,8 @@ func testShieldExit(t *testing.T, shield uintptr) {
 
 	args := testBuildExitArgs(critical, decoy)
 
-	// run shield in a dedicated thread because ExitThread will terminate the calling thread
+	// run shield in a dedicated thread because
+	// ExitThread will terminate the calling thread
 	callback := syscall.NewCallback(func(lpParameter uintptr) uintptr {
 		ctx := (*testExitCtx)(unsafe.Pointer(lpParameter))
 		_, _, _ = syscall.SyscallN(ctx.Shield, uintptr(unsafe.Pointer(ctx.Args)))
@@ -187,16 +188,21 @@ func testShieldExit(t *testing.T, shield uintptr) {
 	require.NotZero(t, hThread, err)
 
 	// wait for thread to exit
-	ret, _, err := procWaitForSingleObject.Call(hThread, 5000)
-	require.Equalf(t, uintptr(windows.WAIT_OBJECT_0), ret, "WaitForSingleObject failed: %v", err)
+	ret, _, err := procWaitForSingleObject.Call(hThread, 1000)
+	require.Equal(t, uintptr(windows.WAIT_OBJECT_0), ret, err)
 
 	// verify thread exit code = 0
 	exitCode := uintptr(123)
 	_, _, _ = procGetExitCodeThread.Call(hThread, uintptr(unsafe.Pointer(&exitCode)))
-	require.Equal(t, uintptr(0), exitCode, "thread exit code should be 0")
+	require.Equal(t, uintptr(0), exitCode)
 
 	err = windows.CloseHandle(windows.Handle(hThread))
 	require.NoError(t, err)
+
+	// the shield called VirtualFree on critical,
+	// verify it was freed double VirtualFree should fail
+	ret, _, _ = procVirtualFree.Call(criticalAddr, 0, windows.MEM_RELEASE)
+	require.Zero(t, ret)
 
 	// prevent compiler optimization
 	runtime.KeepAlive(critical)

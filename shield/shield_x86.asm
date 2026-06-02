@@ -175,7 +175,7 @@ method_exit:
   // release critical memory
   mov {{.RegN.edi}}, [{{.RegN.ebp}} + 2*4]     {{iji}} // get address of VirtualFree
   xor [{{.RegN.ebp}} + 2*4], {{.RegN.edi}}     {{iji}} // destroy address of VirtualFree
-  push 0x4000                                  {{iji}} // dwFreeType = MEM_RELEASE
+  push 0x8000                                  {{iji}} // dwFreeType = MEM_RELEASE
   xor {{.RegV.edx}}, {{.RegV.edx}}             {{iji}} // dwSize = 0
   push {{.RegV.edx}}                           {{iji}} // push dwSize
   mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // get critical address

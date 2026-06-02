@@ -194,7 +194,7 @@ method_exit:
   xor [{{.RegN.rbp}} + 2*8], {{.RegN.rdi}}     {{iji}} // destroy address of VirtualFree
   mov rcx, [{{.RegN.rbp}} + 4*8]               {{iji}} // lpAddress
   xor rdx, rdx                                 {{iji}} // dwSize = 0
-  mov r8, 0x4000                               {{iji}} // dwFreeType = MEM_RELEASE
+  mov r8, 0x8000                               {{iji}} // dwFreeType = MEM_RELEASE
   sub rsp, 0x28                                {{iji}} // reserve stack for call convention
   call {{.RegN.rdi}}                           {{iji}} // call VirtualFree
   add rsp, 0x28                                {{iji}} // restore stack for call convention

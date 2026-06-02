@@ -142,6 +142,7 @@ func testShieldSleep(t *testing.T, shield uintptr, sleep time.Duration) {
 
 	// prevent compiler optimization
 	runtime.KeepAlive(critical)
+	runtime.KeepAlive(decoy)
 	runtime.KeepAlive(shelter)
 }
 
@@ -170,9 +171,37 @@ func testShieldExit(t *testing.T, shield uintptr) {
 
 	args := testBuildExitArgs(critical, decoy)
 
+	// run shield in a dedicated thread because ExitThread will terminate the calling thread
+	callback := syscall.NewCallback(func(lpParameter uintptr) uintptr {
+		ctx := (*testExitCtx)(unsafe.Pointer(lpParameter))
+		_, _, _ = syscall.SyscallN(ctx.Shield, uintptr(unsafe.Pointer(ctx.Args)))
+		return 0 // unreachable
+	})
+	ctx := &testExitCtx{
+		Shield: shield,
+		Args:   args,
+	}
+	hThread, _, err := procCreateThread.Call(
+		0, 0, callback, uintptr(unsafe.Pointer(ctx)), 0, 0,
+	)
+	require.NotZero(t, hThread, err)
+
+	// wait for thread to exit
+	ret, _, err := procWaitForSingleObject.Call(hThread, 5000)
+	require.Equalf(t, uintptr(windows.WAIT_OBJECT_0), ret, "WaitForSingleObject failed: %v", err)
+
+	// verify thread exit code = 0
+	exitCode := uintptr(123)
+	_, _, _ = procGetExitCodeThread.Call(hThread, uintptr(unsafe.Pointer(&exitCode)))
+	require.Equal(t, uintptr(0), exitCode, "thread exit code should be 0")
+
+	err = windows.CloseHandle(windows.Handle(hThread))
+	require.NoError(t, err)
+
 	// prevent compiler optimization
 	runtime.KeepAlive(critical)
-	runtime.KeepAlive(args)
+	runtime.KeepAlive(decoy)
+	runtime.KeepAlive(ctx)
 }
 
 func testBuildSleepArgs(t *testing.T, critical, decoy, shelter []byte, sleep time.Duration) *testSleepArgs {

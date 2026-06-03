@@ -20,7 +20,7 @@ func TestGenerator(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("size:", len(ctx.Output))
-			t.Log(ctx.ShieldInst)
+			t.Log(ctx.Inst)
 
 			if runtime.GOOS != "windows" || runtime.GOARCH != "386" {
 				return
@@ -41,7 +41,7 @@ func TestGenerator(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Log("size:", len(ctx.Output))
-			t.Log(ctx.ShieldInst)
+			t.Log(ctx.Inst)
 
 			if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
 				return

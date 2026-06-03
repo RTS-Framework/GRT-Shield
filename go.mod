@@ -7,8 +7,8 @@ require (
 	github.com/For-ACGN/go-keystone v1.0.8
 	github.com/stretchr/testify v1.11.1
 
-	golang.org/x/arch v0.25.0
-	golang.org/x/sys v0.38.0
+	golang.org/x/arch v0.28.0
+	golang.org/x/sys v0.46.0
 )
 
 require (

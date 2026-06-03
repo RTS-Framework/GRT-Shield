@@ -147,12 +147,6 @@ func testShieldSleep(t *testing.T, shield uintptr, sleep time.Duration) {
 }
 
 func testShieldExit(t *testing.T, shield uintptr) {
-	criticalSize := uintptr(8192)
-	allocType := uint32(windows.MEM_COMMIT | windows.MEM_RESERVE)
-	criticalAddr, err := windows.VirtualAlloc(0, criticalSize, allocType, windows.PAGE_READWRITE)
-	require.NoError(t, err)
-	critical := unsafe.Slice((*byte)(unsafe.Pointer(criticalAddr)), criticalSize)
-	copy(critical, "runtime instruction")
 	var decoy []byte
 	switch runtime.GOARCH {
 	case "386":
@@ -162,15 +156,48 @@ func testShieldExit(t *testing.T, shield uintptr) {
 	default:
 		panic("unsupported architecture")
 	}
-
 	decoyAddr := uintptr(unsafe.Pointer(&decoy[0]))
+	t.Logf("shield address:      0x%X\n", shield)
+	t.Logf("decoy address:       0x%X\n", decoyAddr)
 
-	t.Logf("shield address:   0x%X\n", shield)
-	t.Logf("critical address: 0x%X\n", criticalAddr)
-	t.Logf("decoy address:    0x%X\n", decoyAddr)
+	// release memory with RO
+	criticalSize := uintptr(8192)
+	allocType := uint32(windows.MEM_COMMIT | windows.MEM_RESERVE)
+	criticalAddr, err := windows.VirtualAlloc(0, criticalSize, allocType, windows.PAGE_READONLY)
+	require.NoError(t, err)
+	critical := unsafe.Slice((*byte)(unsafe.Pointer(criticalAddr)), criticalSize)
+	t.Logf("critical address RO: 0x%X\n", criticalAddr)
 
 	args := testBuildExitArgs(critical, decoy)
+	testCallShieldExit(t, shield, args)
 
+	// the shield called VirtualFree on critical,
+	// verify it was freed double VirtualFree should fail
+	ret, _, _ := procVirtualFree.Call(criticalAddr, 0, windows.MEM_RELEASE)
+	require.Zero(t, ret)
+
+	// release memory with RW and not use VirtualProtect
+	criticalAddr, err = windows.VirtualAlloc(0, criticalSize, allocType, windows.PAGE_READWRITE)
+	require.NoError(t, err)
+	critical = unsafe.Slice((*byte)(unsafe.Pointer(criticalAddr)), criticalSize)
+	copy(critical, "runtime instruction")
+	t.Logf("critical address RW: 0x%X\n", criticalAddr)
+
+	args = testBuildExitArgs(critical, decoy)
+	args.VirtualProtect = 0
+	testCallShieldExit(t, shield, args)
+
+	// the shield called VirtualFree on critical,
+	// verify it was freed double VirtualFree should fail
+	ret, _, _ = procVirtualFree.Call(criticalAddr, 0, windows.MEM_RELEASE)
+	require.Zero(t, ret)
+
+	// prevent compiler optimization
+	runtime.KeepAlive(critical)
+	runtime.KeepAlive(decoy)
+}
+
+func testCallShieldExit(t *testing.T, shield uintptr, args *testExitArgs) {
 	// run shield in a dedicated thread because
 	// ExitThread will terminate the calling thread
 	callback := syscall.NewCallback(func(lpParameter uintptr) uintptr {
@@ -199,14 +226,7 @@ func testShieldExit(t *testing.T, shield uintptr) {
 	err = windows.CloseHandle(windows.Handle(hThread))
 	require.NoError(t, err)
 
-	// the shield called VirtualFree on critical,
-	// verify it was freed double VirtualFree should fail
-	ret, _, _ = procVirtualFree.Call(criticalAddr, 0, windows.MEM_RELEASE)
-	require.Zero(t, ret)
-
 	// prevent compiler optimization
-	runtime.KeepAlive(critical)
-	runtime.KeepAlive(decoy)
 	runtime.KeepAlive(ctx)
 }
 

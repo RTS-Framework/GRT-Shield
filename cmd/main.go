@@ -67,7 +67,7 @@ func main() {
 	}
 
 	fmt.Println("============Instruction=============")
-	fmt.Println(ctx.ShieldInst)
+	fmt.Println(ctx.Inst)
 	fmt.Println("==============Context===============")
 	fmt.Println("seed:", ctx.Seed)
 	fmt.Println("size:", len(ctx.Output))

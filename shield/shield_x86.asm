@@ -220,8 +220,8 @@ xor_buf:
   shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
  loop_xor:
   mov {{.RegN.esi}}, [{{.RegV.ecx}}]           {{iji}} // load data from source
+  xor {{.RegN.esi}}, {{.RegN.ebx}}             {{iji}} // xor data with crypto key
   mov [{{.RegV.eax}}], {{.RegN.esi}}           {{iji}} // copy data to destination
-  xor [{{.RegV.eax}}], {{.RegN.ebx}}           {{iji}} // encrypt data with crypto key
   add {{.RegV.ecx}}, 4                         {{iji}} // add source address
   add {{.RegV.eax}}, 4                         {{iji}} // add destination address
   dec {{.RegV.edx}}                            {{iji}} // update loop count

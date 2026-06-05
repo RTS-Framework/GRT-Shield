@@ -257,7 +257,7 @@ func testBuildSleepArgs(t *testing.T, critical, decoy, shelter []byte, sleep tim
 
 func testBuildExitArgs(critical, decoy []byte) *testExitArgs {
 	args := &testExitArgs{
-		Method:          methodExit,
+		Method:          methodStop,
 		VirtualProtect:  procVirtualProtect.Addr(),
 		VirtualFree:     procVirtualFree.Addr(),
 		ExitThread:      procExitThread.Addr(),

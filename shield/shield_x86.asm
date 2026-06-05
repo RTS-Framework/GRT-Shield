@@ -6,7 +6,7 @@
 //   CriticalSize must be 4 bytes aligned
 
 // struct:
-//   ======== Sleep ========                               ======== Exit ========
+//   ======== Sleep ========                               ======== Stop ========
 //   [ebp + 0*4]  Method                                   [ebp + 0*4]  Method
 //   [ebp + 1*4]  VirtualProtect                           [ebp + 1*4]  VirtualProtect
 //   [ebp + 2*4]  WaitForSingleObject                      [ebp + 2*4]  VirtualFree
@@ -41,7 +41,7 @@ entry:
   cmp {{.RegV.eax}}, 1                         {{iji}}
   je method_sleep                              {{iji}}
   cmp {{.RegV.eax}}, 2                         {{iji}}
-  je method_exit                               {{iji}}
+  je method_stop                               {{iji}}
 
  exit:
   ret 4                                        {{iji}}
@@ -131,7 +131,7 @@ method_sleep:
   pop {{.RegN.ebp}}                            {{iji}}
   ret 4                                        {{iji}}
 
-method_exit:
+method_stop:
   // save context
   push {{.RegN.ebp}}                           {{iji}} // for save structure pointer
   push {{.RegN.ebx}}                           {{iji}} // for save crypto key

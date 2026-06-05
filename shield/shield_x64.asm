@@ -6,7 +6,7 @@
 //   CriticalSize must be 8 bytes aligned
 
 // struct:
-//   ======== Sleep ========                               ======== Exit ========
+//   ======== Sleep ========                               ======== Stop ========
 //   [rbp + 0*8]  Method                                   [rbp + 0*8]  Method
 //   [rbp + 1*8]  VirtualProtect                           [rbp + 1*8]  VirtualProtect
 //   [rbp + 2*8]  WaitForSingleObject                      [rbp + 2*8]  VirtualFree
@@ -43,7 +43,7 @@ entry:
   cmp {{.RegV.rax}}, 1                         {{iji}}
   je method_sleep                              {{iji}}
   cmp {{.RegV.rax}}, 2                         {{iji}}
-  je method_exit                               {{iji}}
+  je method_stop                               {{iji}}
 
   // process the stack balance
   pop rcx                                      {{iji}}
@@ -145,7 +145,7 @@ method_sleep:
   pop {{.RegN.rbp}}                            {{iji}}
   ret                                          {{iji}}
 
-method_exit:
+method_stop:
   // restore argument pointer
   pop rcx                                      {{iji}}
 

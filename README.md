@@ -14,7 +14,7 @@ package main
 import (
     "encoding/hex"
     "fmt"
-	"os"
+    "os"
 
     "github.com/RTS-Framework/GRT-Shield"
 )

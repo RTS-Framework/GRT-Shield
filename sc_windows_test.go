@@ -296,7 +296,7 @@ func testDeployShield(t *testing.T, shield []byte) uintptr {
 		caveSize = pageSize - pageOffset
 	}
 	if int(caveSize) <= len(shield) {
-		return loadShellcode(t, shield)
+		return testDeployOnRWXPage(t, shield)
 	}
 
 	// write shield to the code cave
@@ -319,13 +319,13 @@ func testDeployShield(t *testing.T, shield []byte) uintptr {
 	return address
 }
 
-func loadShellcode(t *testing.T, sc []byte) uintptr {
-	size := uintptr(len(sc))
+func testDeployOnRWXPage(t *testing.T, shield []byte) uintptr {
+	size := uintptr(len(shield))
 	mType := uint32(windows.MEM_COMMIT | windows.MEM_RESERVE)
 	mProtect := uint32(windows.PAGE_EXECUTE_READWRITE)
-	scAddr, err := windows.VirtualAlloc(0, size, mType, mProtect)
+	addr, err := windows.VirtualAlloc(0, size, mType, mProtect)
 	require.NoError(t, err)
-	dst := unsafe.Slice((*byte)(unsafe.Pointer(scAddr)), size)
-	copy(dst, sc)
-	return scAddr
+	dst := unsafe.Slice((*byte)(unsafe.Pointer(addr)), size)
+	copy(dst, shield)
+	return addr
 }

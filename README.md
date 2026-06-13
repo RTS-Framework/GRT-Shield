@@ -14,6 +14,7 @@ package main
 import (
     "encoding/hex"
     "fmt"
+	"os"
 
     "github.com/RTS-Framework/GRT-Shield"
 )
@@ -31,7 +32,7 @@ func main() {
 
     fmt.Println("seed:", ctx.Seed)
     fmt.Println("size:", len(ctx.Output))
-    fmt.Println(hex.EncodeToString(ctx.Output))
+    fmt.Println(ctx.Inst)
 
     err = generator.Close()
     checkError(err)

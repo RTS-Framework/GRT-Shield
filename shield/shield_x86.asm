@@ -15,7 +15,7 @@
 //   [ebp + 5*4]  CriticalSize                             [ebp + 5*4]  CriticalSize
 //   [ebp + 6*4]  DecoyAddress                             [ebp + 6*4]  DecoyAddress
 //   [ebp + 7*4]  DecoySize                                [ebp + 7*4]  DecoySize
-//   [ebp + 8*4]  ShelterAddress
+//   [ebp + 8*4]  ShelterAddress                           [ebp + 8*4]  ExitCode
 //   [ebp + 9*4]  TimerHandle
 
 // step:
@@ -189,7 +189,7 @@ method_stop:
   // exit current thread
   mov {{.RegN.edi}}, [{{.RegN.ebp}} + 3*4]     {{iji}} // get address of ExitThread
   xor [{{.RegN.ebp}} + 3*4], {{.RegN.edi}}     {{iji}} // destroy address of ExitThread
-  xor {{.RegV.ecx}}, {{.RegV.ecx}}             {{iji}} // dwExitCode = 0
+  mov {{.RegV.ecx}}, [{{.RegN.ebp}} + 8*4]     {{iji}} // get exit code from structure
   push {{.RegV.ecx}}                           {{iji}} // push dwExitCode
   call {{.RegN.edi}}                           {{iji}} // call ExitThread
 

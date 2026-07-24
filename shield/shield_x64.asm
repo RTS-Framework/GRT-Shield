@@ -15,7 +15,7 @@
 //   [rbp + 5*8]  CriticalSize                             [rbp + 5*8]  CriticalSize
 //   [rbp + 6*8]  DecoyAddress                             [rbp + 6*8]  DecoyAddress
 //   [rbp + 7*8]  DecoySize                                [rbp + 7*8]  DecoySize
-//   [rbp + 8*8]  ShelterAddress
+//   [rbp + 8*8]  ShelterAddress                           [rbp + 8*8]  ExitCode
 //   [rbp + 9*8]  TimerHandle
 
 // step:
@@ -206,7 +206,7 @@ method_stop:
   // exit current thread
   mov {{.RegN.rdi}}, [{{.RegN.rbp}} + 3*8]     {{iji}} // get address of ExitThread
   xor [{{.RegN.rbp}} + 3*8], {{.RegN.rdi}}     {{iji}} // destroy address of ExitThread
-  xor rcx, rcx                                 {{iji}} // dwExitCode = 0
+  mov rcx, [{{.RegN.rbp}} + 8*8]               {{iji}} // get exit code from structure
   sub rsp, 0x28                                {{iji}} // reserve stack for call convention
   call {{.RegN.rdi}}                           {{iji}} // call ExitThread
   add rsp, 0x28                                {{iji}} // restore stack for call convention

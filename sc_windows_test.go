@@ -53,6 +53,7 @@ type testExitArgs struct {
 	CriticalSize    uintptr
 	DecoyAddress    uintptr
 	DecoySize       uintptr
+	ExitCode        uintptr
 }
 
 type testExitCtx struct {
@@ -221,7 +222,7 @@ func testCallShieldExit(t *testing.T, shield uintptr, args *testExitArgs) {
 	// verify thread exit code = 0
 	exitCode := uintptr(123)
 	_, _, _ = procGetExitCodeThread.Call(hThread, uintptr(unsafe.Pointer(&exitCode)))
-	require.Equal(t, uintptr(0), exitCode)
+	require.Equal(t, uintptr(0x1234), exitCode)
 
 	err = windows.CloseHandle(windows.Handle(hThread))
 	require.NoError(t, err)
@@ -265,6 +266,7 @@ func testBuildExitArgs(critical, decoy []byte) *testExitArgs {
 		CriticalSize:    uintptr(len(critical)),
 		DecoyAddress:    uintptr(unsafe.Pointer(&decoy[0])),
 		DecoySize:       uintptr(len(decoy)),
+		ExitCode:        0x1234,
 	}
 	return args
 }

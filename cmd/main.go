@@ -52,17 +52,21 @@ func main() {
 	)
 	for i := 0; i < 10; i++ {
 		ctx, err = generator.Generate(arch, &opts)
-		if err != nil {
-			if err == shield.ErrShieldSizeTooLarge {
-				fmt.Println("shield size too large, regenerate it")
-				continue
-			}
+		if err == nil {
+			break
+		}
+		if err != shield.ErrShieldSizeTooLarge {
 			checkError(err)
 		}
-		break
+		if opts.RandSeed != 0 {
+			fmt.Println("shield size is too large, reset seed")
+			return
+		}
+		fmt.Println("shield size is too large, try to regenerate it")
+		continue
 	}
 	if ctx == nil {
-		fmt.Println("regenerate shield too many times, please check template")
+		fmt.Println("regenerate shield too many times, please check the template")
 		os.Exit(1)
 	}
 

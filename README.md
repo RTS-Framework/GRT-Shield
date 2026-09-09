@@ -12,7 +12,6 @@ shield -arch 32 -seed 1234 -out shield_x86.bin
 package main
 
 import (
-    "encoding/hex"
     "fmt"
     "os"
 
@@ -47,14 +46,14 @@ func checkError(err error) {
 ```
 
 ## Disclaimer
-This project is developed solely for security research, educational purposes, and authorized penetration testing.\
+This project is developed solely for security research, educational purposes, and authorized penetration testing.
 Any use for illegal activities, unauthorized access to computer systems, or malicious purposes is strictly prohibited.
 
 By using this project, you agree that:
 
 1. You will only use it in environments you own or have explicit authorization to test.
 2. You are solely responsible for ensuring compliance with all applicable local, state, national, and international laws and regulations.
-3. The authors and contributors assume no liability and are not responsible for any misuse or damage ca +used by this project.
+3. The authors and contributors assume no liability and are not responsible for any misuse or damage caused by this project.
 4. You understand that unauthorized use of computer systems is a criminal offense in most jurisdictions
 
 This software is provided "as is" without warranty of any kind, express or implied. Use at your own risk.

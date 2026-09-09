@@ -295,11 +295,10 @@ decoy:
   mov {{.RegV.rdx}}, [{{.RegN.rbp}} + 5*8]     {{iji}} // get critical size
   sub {{.RegV.rdx}}, [{{.RegN.rbp}} + 7*8]     {{iji}} // remaining = critical size - decoy size
   jz skip_decoy                                {{iji}} // no remaining bytes to erase
-  shr {{.RegV.rdx}}, 3                         {{iji}} // calculate the loop count (qwords)
   xor {{.RegV.r8}}, {{.RegV.r8}}               {{iji}} // zero value
  loop_erase:
-  mov [{{.RegV.rcx}}], {{.RegV.r8}}            {{iji}} // erase critical data
-  add {{.RegV.rcx}}, 8                         {{iji}} // update address
+  mov [{{.RegV.rcx}}], {{.RegV.r8b}}           {{iji}} // erase one byte of critical data
+  inc {{.RegV.rcx}}                            {{iji}} // update address
   dec {{.RegV.rdx}}                            {{iji}} // update loop count
   jnz loop_erase                               {{iji}} // check need erase next
 

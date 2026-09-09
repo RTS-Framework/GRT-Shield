@@ -278,13 +278,14 @@ decoy:
   mov {{.RegV.edx}}, [{{.RegN.ebp}} + 5*4]     {{iji}} // get critical size
   sub {{.RegV.edx}}, [{{.RegN.ebp}} + 7*4]     {{iji}} // remaining = critical size - decoy size
   jz skip_decoy                                {{iji}} // no remaining bytes to erase
-  shr {{.RegV.edx}}, 2                         {{iji}} // calculate the loop count (dwords)
-  xor {{.RegV.eax}}, {{.RegV.eax}}             {{iji}} // zero value
+  push ebx                                     {{iji}} // save register for byte temp
+  xor ebx, ebx                                 {{iji}} // zero value
  loop_erase:
-  mov [{{.RegV.ecx}}], {{.RegV.eax}}           {{iji}} // erase critical data
-  add {{.RegV.ecx}}, 4                         {{iji}} // update address
+  mov [{{.RegV.ecx}}], bl                      {{iji}} // erase one byte of critical data
+  inc {{.RegV.ecx}}                            {{iji}} // update address
   dec {{.RegV.edx}}                            {{iji}} // update loop count
   jnz loop_erase                               {{iji}} // check need erase next
+  pop ebx                                      {{iji}} // restore register
 
  skip_decoy:
   ret                                          {{iji}}

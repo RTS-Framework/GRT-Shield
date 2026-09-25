@@ -166,7 +166,7 @@ func testShieldExit(t *testing.T, shield uintptr) {
 	allocType := uint32(windows.MEM_COMMIT | windows.MEM_RESERVE)
 	criticalAddr, err := windows.VirtualAlloc(0, criticalSize, allocType, windows.PAGE_READONLY)
 	require.NoError(t, err)
-	critical := unsafe.Slice((*byte)(unsafe.Pointer(criticalAddr)), criticalSize)
+	critical := unsafe.Slice((*byte)(unsafe.Pointer(criticalAddr)), criticalSize) //nolint:govet
 	t.Logf("critical address RO: 0x%X\n", criticalAddr)
 
 	args := testBuildExitArgs(critical, decoy)
@@ -180,7 +180,7 @@ func testShieldExit(t *testing.T, shield uintptr) {
 	// release memory with RW and not use VirtualProtect
 	criticalAddr, err = windows.VirtualAlloc(0, criticalSize, allocType, windows.PAGE_READWRITE)
 	require.NoError(t, err)
-	critical = unsafe.Slice((*byte)(unsafe.Pointer(criticalAddr)), criticalSize)
+	critical = unsafe.Slice((*byte)(unsafe.Pointer(criticalAddr)), criticalSize) //nolint:govet
 	copy(critical, "runtime instruction")
 	t.Logf("critical address RW: 0x%X\n", criticalAddr)
 
@@ -202,7 +202,7 @@ func testCallShieldExit(t *testing.T, shield uintptr, args *testExitArgs) {
 	// run shield in a dedicated thread because
 	// ExitThread will terminate the calling thread
 	callback := syscall.NewCallback(func(lpParameter uintptr) uintptr {
-		ctx := (*testExitCtx)(unsafe.Pointer(lpParameter))
+		ctx := (*testExitCtx)(unsafe.Pointer(lpParameter)) //nolint:govet
 		_, _, _ = syscall.SyscallN(ctx.Shield, uintptr(unsafe.Pointer(ctx.Args)))
 		return 0 // unreachable
 	})
@@ -309,7 +309,7 @@ func testDeployShield(t *testing.T, shield []byte) uintptr {
 	err = windows.VirtualProtect(address, size, windows.PAGE_READWRITE, &old)
 	require.NoError(t, err)
 
-	dst := unsafe.Slice((*byte)(unsafe.Pointer(address)), size)
+	dst := unsafe.Slice((*byte)(unsafe.Pointer(address)), size) //nolint:govet
 	copy(dst, shield)
 
 	err = windows.VirtualProtect(address, size, old, &old)
@@ -327,7 +327,7 @@ func testDeployOnRWXPage(t *testing.T, shield []byte) uintptr {
 	mProtect := uint32(windows.PAGE_EXECUTE_READWRITE)
 	addr, err := windows.VirtualAlloc(0, size, mType, mProtect)
 	require.NoError(t, err)
-	dst := unsafe.Slice((*byte)(unsafe.Pointer(addr)), size)
+	dst := unsafe.Slice((*byte)(unsafe.Pointer(addr)), size) //nolint:govet
 	copy(dst, shield)
 	return addr
 }

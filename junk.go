@@ -134,7 +134,7 @@ func (gen *Generator) junkTemplate() []byte {
 		panic(err)
 	}
 	if len(asm) == 0 {
-		panic("empty output junk code assembly source")
+		panic("empty output junk code source")
 	}
 	// assemble junk code
 	inst, err := gen.assemble(asm)
@@ -163,7 +163,7 @@ func (gen *Generator) getJunkCodeX64() []string {
 
 // #nosec G115
 func (gen *Generator) buildJunkCode(src string) (string, error) {
-	// process assembly source
+	// process template
 	tpl, err := template.New("junk_code").Funcs(template.FuncMap{
 		"db":  toDB,
 		"hex": toHex,
@@ -221,7 +221,7 @@ func (gen *Generator) buildJunkCode(src string) (string, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, 512))
 	err = tpl.Execute(buf, &ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to build junk code assembly source: %s", err)
+		return "", fmt.Errorf("failed to build junk code source: %s", err)
 	}
 	return buf.String(), nil
 }

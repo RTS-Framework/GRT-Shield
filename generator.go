@@ -119,7 +119,7 @@ func (gen *Generator) Generate(arch int, opts *Options) (ctx *Context, err error
 	// build shield from template
 	shield, err := gen.buildShield("")
 	if err != nil {
-		return nil, fmt.Errorf("failed to build shield: %s", err)
+		return nil, err
 	}
 	output, err := gen.assemble(shield)
 	if err != nil {

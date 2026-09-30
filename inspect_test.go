@@ -81,7 +81,7 @@ func TestInspectJunkCodeTemplate(t *testing.T) {
 
 	t.Run("invalid template", func(t *testing.T) {
 		asm, inst, err := InspectJunkCodeTemplate(32, "{{.Invalid}}")
-		require.ErrorContains(t, err, "failed to build junk code assembly source")
+		require.ErrorContains(t, err, "failed to build junk code source")
 		require.Nil(t, inst)
 		require.Zero(t, asm)
 	})
